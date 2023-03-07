@@ -1,0 +1,113 @@
+:root {
+    --ct-header-background: #f7f7f7;
+    --ct-border: #f4f4f6;
+    --ct-border-width: 1px;
+    --ct-text: #172b4d;
+    --ct-font-weight-medium: 500;
+    --ct-cell-spacing: 8px;
+    --ct-cell-padding: var(--ct-cell-spacing) calc(var(--ct-cell-spacing) * 2);
+}
+
+.ct__wrapper {
+    width: 100%;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid var(--ct-border, #dfe1e6);
+}
+
+.ct__wrapper__root {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.ct__row {}
+
+.ct-cell {}
+
+
+
+.ct__wrapper__root__header__row__cell:first-child,
+.ct__wrapper__root__body__row__cell:first-child {
+    padding-left: 0;
+}
+
+.ct__wrapper__root__header__row__cell:last-child,
+.ct__wrapper__root__body__row__cell:last-child {
+    padding-right: 0;
+}
+
+.ct__wrapper__root__header {
+    background-color: var(--ct-header-background);
+    border-bottom: var(--ct-border-width) solid var(--ct-border, #dfe1e6);
+}
+
+.ct__wrapper__root__header__row {
+    vertical-align: top;
+}
+
+.ct__wrapper__root__header__row__cell {
+    text-align: left;
+    color: #5b5d75;
+}
+
+.ct__wrapper__root__header__row__cell:first-of-type {
+    padding-left: var(--ct-cell-spacing);
+}
+
+.ct__wrapper__root__header__row__cell:last-of-type {
+    padding-right: var(--ct-cell-spacing);
+}
+
+.ct__wrapper__root__body {
+    border-bottom: var(--ct-border-width) solid var(--ct-border, #dfe1e6);
+}
+
+.ct__wrapper__root__body__row {
+    height: 48px;
+    position: relative;
+    border-top: none;
+    border-right: none;
+    border-left: none;
+    border-image-source: initial;
+    border-image-slice: initial;
+    border-image-outset: initial;
+    border-image-repeat: initial;
+    border-image-width: 0;
+    border-spacing: 0px;
+    border-bottom: var(--ct-border-width) solid var(--ct-border, #eee);
+}
+
+.ct__wrapper__root__body__row__cell {
+    color: #0c0d0e;
+}
+
+.ct__wrapper__root__body__row__cell:first-of-type {
+    padding-left: var(--ct-cell-spacing);
+}
+
+.ct__wrapper__root__body__row__cell:last-of-type {
+    padding-right: var(--ct-cell-spacing);
+}
+
+.ct__wrapper__root__footer {
+    border-bottom: var(--ct-border-width) solid var(--ct-border, #dfe1e6);
+}
+
+.ct__wrapper__root__header__row__cell,
+.ct__wrapper__root__body__row__cell {
+    border: none;
+    padding: var(--ct-cell-padding);
+    text-align: left;
+}
+
+caption {
+    font-size: 1.4285714285714286em;
+    font-style: inherit;
+    line-height: 1.2;
+    color: var(--ct-text, var(--ct-text, #172b4d));
+    font-weight: var(--ct-font-weight-medium, 500);
+    letter-spacing: -0.008em;
+    margin-top: 28px;
+    margin-bottom: 8px;
+    text-align: left;
+}
