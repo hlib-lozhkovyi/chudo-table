@@ -1,4 +1,4 @@
-import { useReducer, Reducer, useCallback, useContext, Context } from 'react';
+import { useReducer, useMemo, Reducer, useCallback, useContext, Context } from 'react';
 import isFunction from 'lodash/isFunction';
 import get from 'lodash/get';
 import { ChudoTableContext } from 'context';
@@ -10,15 +10,17 @@ import {
   ChudoTableHelpers,
   ChudoTableConfig,
   ChudoTableRow,
-  ChudoTableColumn
+  ChudoTableColumn,
+  ChudoTablePaginationState,
+  ChudoTablePaginationHelpers
 } from "types";
 
 /**
  * 
  */
-export function useChudoTableContext<Record = any,>() {
-  const chudoTable = useContext<ChudoTableContextType<Record>>(
-    ChudoTableContext as unknown as Context<ChudoTableContextType<Record>>,
+export function useChudoTableContext<Record, RemoteData>() {
+  const chudoTable = useContext<ChudoTableContextType<Record, RemoteData>>(
+    ChudoTableContext as unknown as Context<ChudoTableContextType<Record, RemoteData>>,
   );
 
   return chudoTable;
@@ -31,18 +33,25 @@ export interface UseChudoTableHook<Record> extends ChudoTableConfig<Record> {
 
 }
 
-export function useChudoTable<Record = any,>(props: UseChudoTableHook<Record>): ChudoTableContextType<Record> {
+export function useChudoTable<Record = any, RemoteData = Record[]>(
+  props: UseChudoTableHook<Record>
+): ChudoTableContextType<Record, RemoteData> {
   const {
     idAccessor
   } = props
 
   const [state, dispatch] = useReducer<
-    Reducer<ChudoTableState<Record>, ChudoTableAction<Record>>
+    Reducer<ChudoTableState<Record, RemoteData>, ChudoTableAction<Record, RemoteData>>
   >(chudoTableReducer, {
     isLoading: false,
     error: null,
     columns: [],
-    rows: []
+    rows: [],
+    response: null,
+    currentPage: 1,
+    totalPages: 1,
+    pageSize: 10,
+    totalCount: 0
   });
 
   const initializeColumns = useCallback((columns: ChudoTableColumn<Record>[]) => {
@@ -79,13 +88,62 @@ export function useChudoTable<Record = any,>(props: UseChudoTableHook<Record>): 
     });
   }, []);
 
+  const setResponse = useCallback((response: RemoteData) => {
+    dispatch({
+      type: "SET_RESPONSE",
+      payload: {
+        response
+      }
+    });
+  }, []);
 
-  const helpers: ChudoTableHelpers<Record> = {
+  const setCurrentPage = useCallback((currentPage: number) => {
+    dispatch({
+      type: "SET_CURRENT_PAGE",
+      payload: {
+        currentPage
+      }
+    });
+  }, []);
+
+  const setTotalPages = useCallback((totalPages: number) => {
+    dispatch({
+      type: "SET_TOTAL_PAGES",
+      payload: {
+        totalPages
+      }
+    });
+  }, []);
+
+  const setPageSize = useCallback((pageSize: number) => {
+    dispatch({
+      type: "SET_PAGE_SIZE",
+      payload: {
+        pageSize
+      }
+    });
+  }, []);
+
+  const setTotalCount = useCallback((totalCount: number) => {
+    dispatch({
+      type: "SET_TOTAL_COUNT",
+      payload: {
+        totalCount
+      }
+    });
+  }, []);
+
+  const helpers: ChudoTableHelpers<Record, RemoteData> = {
     initializeColumns,
     getRowId,
     setIsLoading,
     setError,
-    setRows
+    setRows,
+    setResponse,
+    setCurrentPage,
+    setTotalPages,
+    setPageSize,
+    setTotalCount,
   }
 
   const ctx = {
@@ -113,20 +171,76 @@ export function useColumns<Record = any,>(): UseColumnsHook<Record> {
 /**
  * 
  */
-export interface UseFetchDataHook<Record = any> {
-  startFetching: any;
-  setData: any;
-  handleFetchError: any;
+export interface UseFetchDataHook<Record, RemoteData> {
+  startFetching: () => void;
+  stopFetching: () => void;
+  setResponse: (response: RemoteData) => void;
+  handleFetchError: (error: Error) => void;
 }
 
-export function useFetchData<Record = Object,>(): UseFetchDataHook<Record> {
-  const { setIsLoading, setRows, getRowId } = useChudoTableContext<Record>();
+export function useFetchData<Record = Object, RemoteData = Record[]>(): UseFetchDataHook<Record, RemoteData> {
+  const { setIsLoading, setResponse, setError } = useChudoTableContext<Record, RemoteData>();
 
   const startFetching = useCallback(() => setIsLoading(true), [setIsLoading]);
 
-  const setData = useCallback((data: Record[]) => {
+  const stopFetching = useCallback(() => setIsLoading(false), [setIsLoading]);
+
+  const handleFetchError = useCallback((error: Error) => {
+    stopFetching();
+    setError(error)
+  }, [stopFetching, setError])
+
+  return {
+    startFetching,
+    stopFetching,
+    setResponse,
+    handleFetchError
+  };
+};
+
+/**
+ * Use
+ */
+export interface UseResponseHook<Record, RemoteData> {
+  response: ChudoTableContextType<Record, RemoteData>["response"];
+}
+
+export function useResponse<Record = any, RemoteData = Record[]>(): UseResponseHook<Record, RemoteData> {
+  const { response } = useChudoTableContext<Record, RemoteData>()
+
+  return { response }
+}
+
+/**
+ * 
+ */
+export interface UseTableHook<Record, RemoteData> {
+  rows: ChudoTableState<Record, RemoteData>['rows'];
+  columns: ChudoTableState<Record, RemoteData>['columns'];
+}
+
+export function useTable<Record = any, RemoteData = Record[]>(): UseTableHook<Record, RemoteData> {
+  const { rows, columns, response } = useChudoTableContext<Record, RemoteData>();
+
+  return {
+    rows,
+    columns
+  }
+}
+
+/**
+ * 
+ */
+export interface UseSetRowsHook<Record, RemoteData> {
+  setRows: (data: Record[]) => void;
+}
+
+export function useSetRows<Record = any, RemoteData = Record[]>(): UseSetRowsHook<Record, RemoteData> {
+  const { getRowId, setRows: setTableRaws, currentPage } = useChudoTableContext<Record, RemoteData>();
+
+  const setRows = useCallback((data: Record[]) => {
     const rows: ChudoTableRow<Record>[] = data.map((_row, index) => {
-      const data = { id: getRowId(_row) ?? index, ..._row }
+      const data = { id: getRowId(_row) ?? currentPage + index, ..._row }
 
       return ({
         ...data,
@@ -136,33 +250,72 @@ export function useFetchData<Record = Object,>(): UseFetchDataHook<Record> {
       })
     })
 
-    setRows(rows)
-    setIsLoading(false);
-  }, [setRows, getRowId]);
-
-  const handleFetchError = useCallback(() => { }, []);
-
+    setTableRaws(rows)
+  }, [getRowId, setTableRaws, currentPage])
 
   return {
-    startFetching,
-    setData,
-    handleFetchError,
-  };
-};
+    setRows
+  }
+}
 
 /**
  * 
  */
-export interface UseTableHook<Record = any> {
-  rows: ChudoTableState<Record>['rows'];
-  columns: ChudoTableState<Record>['columns'];
+export interface UsePaginationHook<Record, RemoteData> extends ChudoTablePaginationState, ChudoTablePaginationHelpers {
+  hasMorePages: boolean;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+  nextPage: () => void;
+  prevPage: () => void;
 }
 
-export function useTable<Record = any,>(): UseTableHook<Record> {
-  const { rows, columns } = useChudoTableContext<Record>();
+export function usePagination<Record = any, RemoteData = Record[]>(): UsePaginationHook<Record, RemoteData> {
+  const {
+    currentPage,
+    totalPages,
+    pageSize,
+    totalCount,
+    setCurrentPage,
+    setTotalPages,
+    setPageSize,
+    setTotalCount,
+  } = useChudoTableContext<Record, RemoteData>();
+
+  const hasMorePages = useMemo(() => currentPage < totalPages, [currentPage, totalPages]);
+
+  const hasPrevPage = useMemo(() => currentPage > 1, [currentPage]);
+
+  const hasNextPage = useMemo(() => hasMorePages, [hasMorePages]);
+
+  const nextPage = useCallback(() => {
+    if (!hasNextPage) {
+      return;
+    }
+
+    setCurrentPage(currentPage + 1)
+  }, [hasNextPage, currentPage, setCurrentPage])
+
+  const prevPage = useCallback(() => {
+    if (!hasPrevPage) {
+      return;
+    }
+
+    setCurrentPage(currentPage - 1)
+  }, [hasPrevPage, currentPage, setCurrentPage])
 
   return {
-    rows,
-    columns
+    currentPage,
+    totalPages,
+    pageSize,
+    totalCount,
+    setCurrentPage,
+    setTotalPages,
+    setPageSize,
+    setTotalCount,
+    hasMorePages,
+    hasNextPage,
+    hasPrevPage,
+    nextPage,
+    prevPage
   }
 }

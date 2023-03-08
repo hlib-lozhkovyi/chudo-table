@@ -13,7 +13,7 @@ export interface ChudoTableProps<Record> extends UseChudoTableHook<Record> {
   wrapperProps?: Partial<TableWrapperPropsInterface>;
 }
 
-export function ChudoTable<Record = any>(props: ChudoTableProps<Record>) {
+export function ChudoTable<Record = any, RemoteData = any>(props: ChudoTableProps<Record>) {
   const {
     children,
     Wrapper = TableWrapper,
@@ -21,11 +21,11 @@ export function ChudoTable<Record = any>(props: ChudoTableProps<Record>) {
     ...hookProps
   } = props;
 
-  const chudoTable = useChudoTable<Record>(hookProps);
+  const chudoTable = useChudoTable<Record, RemoteData>(hookProps);
 
   const TableProvider = (
     ChudoTableProvider as unknown
-  ) as Provider<ChudoTableContextType<Record>>;
+  ) as Provider<ChudoTableContextType<Record, RemoteData>>;
 
   return (
     <TableProvider value={chudoTable}>

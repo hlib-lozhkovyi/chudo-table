@@ -8,7 +8,8 @@ import {
   tableHeaderColumnClassName,
   tableBodyClassName,
   tableBodyRowClassName,
-  tableBodyCellClassName
+  tableBodyCellClassName,
+  tableBodyCellWrapperClassName,
 } from 'config'
 import { ChudoTableColumnType } from "types";
 
@@ -176,4 +177,43 @@ export const TableCell = (props: TableCellPropsInterface) => {
       {children}
     </td>
   )
+}
+
+/**
+ * ColumnHeader
+ */
+export interface ColumnHeaderProps {
+  name: ReactNode;
+}
+
+export function ColumnHeader(props: ColumnHeaderProps) {
+  const { name } = props;
+
+  return <>{name}</>
+}
+
+/**
+ * ColumnHeader
+ */
+export interface ColumnWrapperProps {
+  children: ReactNode;
+}
+
+export function ColumnWrapper(props: ColumnWrapperProps) {
+  const { children } = props;
+
+  return <div>{children}</div>
+}
+
+/**
+ * CellWrapper
+ */
+export interface CellWrapperProps {
+  children: ReactNode;
+}
+
+export function CellWrapper(props: CellWrapperProps) {
+  const { children } = props;
+
+  return <div className={tableBodyCellWrapperClassName}>{children}</div>
 }

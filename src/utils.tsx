@@ -1,7 +1,8 @@
-import React, { ReactElement, ReactNode, Children, FunctionComponent } from 'react';
+import React, { ReactElement, ReactNode, Children } from 'react';
 import isFunction from 'lodash/isFunction'
 import { Column, SelectColumn, ActionColumn } from 'components';
 import { ChudoTableColumn, ChudoTableColumnType } from 'types';
+import { CellWrapper, ColumnHeader } from 'elements';
 
 /**
  *
@@ -25,14 +26,6 @@ export function getColumnType(node: ReactElement): ChudoTableColumnType | null {
 /**
  *
  */
-export function renderDefaultHeader<Record = any>(accessor: ChudoTableColumn<Record>['accessor']): FunctionComponent {
-  return () => <>{accessor}</>
-}
-
-/**
- *
- */
-
 export function isEmptyReactChildren(node: ReactNode) {
   return Children.count(node) === 0;
 }
@@ -48,7 +41,8 @@ export function createColumnsFromChildren<Record = any>(children: React.ReactNod
       return;
     }
 
-    const { accessor, Header, children } = element.props;
+    // ColumnPropsInterface
+    const { accessor, Header, Wrapper, children } = element.props
 
     const type = getColumnType(element);
 
@@ -59,7 +53,10 @@ export function createColumnsFromChildren<Record = any>(children: React.ReactNod
     let route: ChudoTableColumn<Record> = {
       accessor,
       type,
-      Header: Header ? () => Header : renderDefaultHeader(accessor),
+      Header: Header
+        ? () => Header
+        : () => <ColumnHeader name={accessor} />,
+      Wrapper: Wrapper ?? CellWrapper,
       Cell: isFunction(children)
         ? (props) => children(props)
         : !isEmptyReactChildren(children)

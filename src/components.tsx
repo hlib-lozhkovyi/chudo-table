@@ -1,6 +1,7 @@
-import React, { ElementType, HTMLAttributes, ReactNode, useEffect } from 'react';
+import React, { ElementType, HTMLAttributes, ReactNode, useEffect, useCallback } from 'react';
 import isFunction from 'lodash/isFunction';
-import { useColumns, useFetchData, useTable } from 'hooks';
+import get from 'lodash/get';
+import { useChudoTable, useColumns, useFetchData, usePagination, useResponse, useSetRows, useTable } from 'hooks';
 import {
   TableWrapperPropsInterface,
   TableWrapper,
@@ -20,7 +21,7 @@ import {
   TableCell,
 } from 'elements'
 import { createColumnsFromChildren } from 'utils';
-
+import { ChudoTablePaginationState, DataFetcherPropsInterface } from 'types';
 
 /**
  * Table
@@ -70,7 +71,9 @@ export function Table<Record = any>(props: TablePropsInterface<Record>) {
 
                 return (
                   <Cell>
-                    <column.Cell value={value} {...row} />
+                    <column.Wrapper>
+                      <column.Cell value={value} {...row} />
+                    </column.Wrapper>
                   </Cell>
                 )
               })}
@@ -112,6 +115,7 @@ export interface ColumnPropsInterface<Record = any, K extends Extract<keyof Reco
   accessor: K;
   testType?: string;
   Header?: ReactNode;
+  Wrapper?: ElementType;
   children?: (value: Record) => ReactNode | ReactNode;
 }
 
@@ -155,15 +159,16 @@ export function SelectColumn<Record = any>(props: SelectColumnPropsInterface<Rec
  * Data Source
  */
 
-export interface DataSourcePropsInterface<T> {
-  data?: T[];
-  fetcher?: () => Promise<T[]>;
+export interface DataSourcePropsInterface<RemoteData> {
+  data?: RemoteData;
+  fetcher?: (props: DataFetcherPropsInterface) => Promise<RemoteData>;
 }
 
-export function DataSource<Record = any>(props: DataSourcePropsInterface<Record>) {
+export function DataSource<Record = any, RemoteData = Record[]>(props: DataSourcePropsInterface<RemoteData>) {
   const { data, fetcher } = props;
 
-  const { startFetching, setData, handleFetchError } = useFetchData();
+  const { currentPage: page } = usePagination<Record, RemoteData>();
+  const { startFetching, setResponse, handleFetchError } = useFetchData<Record, RemoteData>();
 
   const fetch = async () => {
     if (!fetcher) {
@@ -173,41 +178,141 @@ export function DataSource<Record = any>(props: DataSourcePropsInterface<Record>
     startFetching();
 
     try {
-      const result = await fetcher();
-      setData(result)
+      const result = await fetcher({
+        page,
+      });
+
+      setResponse(result)
     } catch (error) {
-      handleFetchError(error)
+      handleFetchError(error as any as Error)
     }
   }
-
-  useEffect(function initializeWithDataSource() {
-    if (!fetcher) {
-      return;
-    }
-
-    fetch();
-  }, [])
 
   useEffect(function initializeWithData() {
     if (!data) {
       return;
     }
 
-    setData(data)
-  }, [data])
+    setResponse(data)
+  }, [data]);
+
+
+  useEffect(function refetchDataOnPageChange() {
+    if (!fetcher) {
+      return;
+    }
+
+    fetch();
+  }, [page])
+
 
   return null;
 };
 
+/**
+ * Data Transformer
+ */
+export interface DataTransformerProps<Record, RemoteData> {
+  getData: ((response: RemoteData) => Record[]) | string;
+}
 
+export function DataTransformer<Record = any, RemoteData = Record[]>(props: DataTransformerProps<Record, RemoteData>) {
+  const { getData } = props;
+
+  const { response } = useResponse<Record, RemoteData>()
+  const { setRows } = useSetRows<Record, RemoteData>()
+
+  useEffect(function handleResponseChanged() {
+    if (!response) {
+      return;
+    }
+
+    const rows = isFunction(getData)
+      ? getData(response)
+      : get(response, [getData as string])
+
+    setRows(rows)
+  }, [response])
+
+  return null;
+}
 
 /**
  * Pagination
  */
-export interface PaginationPropsInterface {
-
+export interface PaginationProps<Record, RemoteData> {
+  pageSize?: ChudoTablePaginationState["pageSize"];
+  getTotalCount?: ((response: RemoteData) => number) | string;
+  getTotalPages?: ((response: RemoteData) => number) | string;
 }
 
-export function Pagination(props: PaginationPropsInterface) {
-  return null;
-}
+export function Pagination<Record = any, RemoteData = Record[]>(props: PaginationProps<Record, RemoteData>) {
+  const { pageSize, getTotalCount, getTotalPages } = props;
+
+  const { response } = useResponse<Record, RemoteData>()
+  const {
+    setTotalPages,
+    setPageSize,
+    setTotalCount,
+    totalPages,
+    currentPage,
+    hasMorePages,
+    hasNextPage,
+    hasPrevPage,
+    nextPage,
+    prevPage,
+  } = usePagination<Record, RemoteData>();
+
+  useEffect(function handlePageSizeChanged() {
+    if (!pageSize) {
+      return;
+    }
+
+    setPageSize(pageSize)
+  }, [pageSize]);
+
+  useEffect(function handleResponseChanged() {
+    if (response && getTotalPages) {
+      const totalCount = isFunction(getTotalPages)
+        ? getTotalPages(response)
+        : get(response, [getTotalPages as string])
+
+      setTotalPages(totalCount)
+    }
+
+    if (response && getTotalCount) {
+      const totalCount = isFunction(getTotalCount)
+        ? getTotalCount(response)
+        : get(response, [getTotalCount as string])
+
+      setTotalCount(totalCount)
+    }
+  }, [response])
+
+  const handlePrevPageClick = useCallback(() => {
+    prevPage();
+  }, [prevPage])
+
+  const handleNextPageClick = useCallback(() => {
+    nextPage();
+  }, [nextPage])
+
+  return (
+    <>
+      <code>{
+        JSON.stringify({
+          totalPages,
+          currentPage,
+          hasMorePages,
+          hasNextPage,
+          hasPrevPage
+        })
+      }</code>
+      <div>
+        <button onClick={handlePrevPageClick} disabled={!hasPrevPage}>prev</button>
+
+        <button onClick={handleNextPageClick} disabled={!hasNextPage}>next</button>
+      </div>
+    </>
+  )
+};

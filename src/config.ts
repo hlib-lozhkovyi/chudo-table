@@ -13,3 +13,4 @@ export const tableHeaderColumnClassName = tableHeaderRowClassName + '__cell';
 export const tableBodyClassName = tableClassName + '__body';
 export const tableBodyRowClassName = tableBodyClassName + '__row';
 export const tableBodyCellClassName = tableBodyRowClassName + '__cell';
+export const tableBodyCellWrapperClassName = tableBodyCellClassName + '__wrapper';
