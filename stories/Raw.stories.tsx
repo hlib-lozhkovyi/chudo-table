@@ -1,6 +1,6 @@
 import React from "react";
 import { ComponentMeta, ComponentStory } from "@storybook/react";
-import * as Table from "../src/components";
+import * as Table from "../src/table";
 
 export default {
   title: "Examples/Raw",
