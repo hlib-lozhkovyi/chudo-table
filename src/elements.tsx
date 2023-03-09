@@ -1,35 +1,73 @@
-import React, { HTMLAttributes, ReactNode, useCallback } from "react";
+import React, { HTMLAttributes, ReactNode, useCallback, useMemo } from "react";
 import clsx from 'classnames';
 import {
+  containerClassName,
   wrapperClassName,
   tableClassName,
-  tableHeaderClassName,
-  tableHeaderRowClassName,
-  tableHeaderColumnClassName,
+  tableHeadClassName,
+  tableHeadRowClassName,
+  tableHeadColumnClassName,
   tableBodyClassName,
   tableBodyRowClassName,
   tableBodyCellClassName,
   tableBodyCellWrapperClassName,
+  tableCellClassName,
+  tableRowClassName,
 } from 'config'
 import { ChudoTableColumnType } from "types";
 
 /**
  * Wrapper
  */
+export interface TableContainerPropsInterface extends HTMLAttributes<HTMLDivElement> {
+  children: ReactNode;
+  border?: boolean;
+  rounded?: boolean;
+}
+
+export const TableContainer = (props: TableContainerPropsInterface) => {
+  const {
+    className,
+    children,
+    border,
+    rounded,
+    ...rest
+  } = props;
+
+  const getProps = useCallback(() => rest, [rest])
+
+  return (
+    <figure {...getProps()} className={clsx(containerClassName, {
+      [containerClassName + '--border']: border,
+      [containerClassName + '--rounded']: rounded,
+    })}>
+      {children}
+    </figure>
+  )
+}
+/**
+ * Wrapper
+ */
 export interface TableWrapperPropsInterface extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
+  tableId?: string;
 }
 
 export const TableWrapper = (props: TableWrapperPropsInterface) => {
-  const { className, children, ...rest } = props;
+  const { className, children, tableId, ...rest } = props;
 
   const getProps = useCallback(() => rest, [rest])
+
+  const tableCaption = useMemo(() => tableId ? `${tableId}-caption` : undefined, [tableId])
 
   return (
     <div
       tabIndex={0}
       className={clsx(wrapperClassName)}
       role="group"
+      {...(tableCaption && ({
+        'aria-labelledby': tableCaption
+      }))}
       {...getProps()}
     >
       {children}
@@ -62,45 +100,45 @@ export const TableRoot = (props: TableRootPropsInterface) => {
 
 
 /**
- * Header
+ * Head
  */
-export interface TableHeaderPropsInterface extends HTMLAttributes<HTMLTableSectionElement> {
+export interface TableHeadPropsInterface extends HTMLAttributes<HTMLTableSectionElement> {
   children: ReactNode;
 }
 
-export const TableHeader = (props: TableHeaderPropsInterface) => {
+export const TableHead = (props: TableHeadPropsInterface) => {
   const { className, children, ...rest } = props;
 
   const getProps = useCallback(() => rest, [rest])
 
   return (
-    <thead role="rowgroup" className={clsx(tableHeaderClassName)} {...getProps()}>
+    <thead role="rowgroup" className={clsx(tableHeadClassName)} {...getProps()}>
       {children}
     </thead>
   )
 }
 
 /**
- * Header Row
+ * Head Row
  */
-export interface TableHeaderRowPropsInterface extends HTMLAttributes<HTMLTableRowElement> {
+export interface TableHeadRowPropsInterface extends HTMLAttributes<HTMLTableRowElement> {
   children: ReactNode;
 }
 
-export const TableHeaderRow = (props: TableHeaderRowPropsInterface) => {
+export const TableHeadRow = (props: TableHeadRowPropsInterface) => {
   const { className, children, ...rest } = props;
 
   const getProps = useCallback(() => rest, [rest])
 
   return (
-    <tr role="row" className={clsx(tableHeaderRowClassName)} {...getProps()}>
+    <tr role="row" className={clsx(tableRowClassName, tableHeadRowClassName)} {...getProps()}>
       {children}
     </tr>
   )
 }
 
 /**
- * Header Column
+ * Head Column
  */
 export interface TableColumnPropsInterface extends HTMLAttributes<HTMLTableCellElement> {
   children: ReactNode;
@@ -113,7 +151,7 @@ export const TableColumn = (props: TableColumnPropsInterface) => {
   const getProps = useCallback(() => rest, [rest])
 
   return (
-    <th role="columnheader" className={clsx(tableHeaderColumnClassName)} data-type={type} {...getProps()}>
+    <th role="columnheader" className={clsx(tableCellClassName, tableHeadColumnClassName)} data-type={type} {...getProps()}>
       {children}
     </th>
   )
@@ -153,7 +191,7 @@ export const TableRow = (props: TableRowPropsInterface) => {
   const getProps = useCallback(() => rest, [rest])
 
   return (
-    <tr role="row" className={clsx(tableBodyRowClassName)} {...getProps()}>
+    <tr role="row" className={clsx(tableRowClassName, tableBodyRowClassName)} {...getProps()}>
       {children}
     </tr>
   )
@@ -173,7 +211,7 @@ export const TableCell = (props: TableCellPropsInterface) => {
   const getProps = useCallback(() => rest, [rest])
 
   return (
-    <td role="cell" className={tableBodyCellClassName} {...getProps()}>
+    <td role="cell" className={clsx(tableCellClassName, tableBodyCellClassName)} {...getProps()}>
       {children}
     </td>
   )
@@ -190,6 +228,7 @@ export function ColumnHeader(props: ColumnHeaderProps) {
   const { name } = props;
 
   return <>{name}</>
+  return <>{name}<SortArrow sortDir={"ascending"} /></>
 }
 
 /**
@@ -216,4 +255,31 @@ export function CellWrapper(props: CellWrapperProps) {
   const { children } = props;
 
   return <div className={tableBodyCellWrapperClassName}>{children}</div>
+}
+
+
+/***
+ * SortArrow
+ */
+
+export interface SortArrowProps {
+  sortDir: 'ascending' | 'desceding';
+  isCurrent?: boolean;
+}
+
+export function SortArrow(props: SortArrowProps) {
+  const { sortDir, isCurrent } = props;
+  const ascending = sortDir === 'ascending';
+
+  return (
+    <svg viewBox="0 0 100 200" width="100" height="200">
+      {!(!ascending && isCurrent) &&
+        <polyline points="20 50, 50 20, 80 50"></polyline>
+      }
+      <line x1="50" y1="20" x2="50" y2="180"></line>
+      {!(ascending && isCurrent) &&
+        <polyline points="20 150, 50 180, 80 150"></polyline>
+      }
+    </svg>
+  );
 }

@@ -5,6 +5,7 @@ export {
   DataSource,
   DataTransformer,
   Table,
+  TableHeader,
   Columns,
   SelectColumn,
   Column,

@@ -12,7 +12,8 @@ import {
   ChudoTableRow,
   ChudoTableColumn,
   ChudoTablePaginationState,
-  ChudoTablePaginationHelpers
+  ChudoTablePaginationHelpers,
+  ChudoTableMetaConfig
 } from "types";
 
 /**
@@ -155,6 +156,18 @@ export function useChudoTable<Record = any, RemoteData = Record[]>(
   return ctx;
 }
 
+export interface UseTableMetaHook {
+  id?: ChudoTableMetaConfig["id"];
+}
+
+export function useTableMeta<Record, RemoteData>(): UseTableMetaHook {
+  const { id } = useChudoTableContext<Record, RemoteData>() ?? {};
+
+  return {
+    id
+  }
+}
+
 /**
  * 
  */
@@ -162,8 +175,8 @@ export interface UseColumnsHook<Record> {
   initializeColumns: ChudoTableHelpers<Record>["initializeColumns"]
 }
 
-export function useColumns<Record = any,>(): UseColumnsHook<Record> {
-  const { initializeColumns } = useChudoTableContext<Record>();
+export function useColumns<Record, RemoteData>(): UseColumnsHook<Record> {
+  const { initializeColumns } = useChudoTableContext<Record, RemoteData>();
 
   return { initializeColumns }
 }

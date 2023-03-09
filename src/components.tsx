@@ -1,16 +1,18 @@
-import React, { ElementType, HTMLAttributes, ReactNode, useEffect, useCallback } from 'react';
+import React, { ElementType, HTMLAttributes, ReactNode, useEffect, useCallback, useMemo } from 'react';
+import clsx from 'classnames';
 import isFunction from 'lodash/isFunction';
 import get from 'lodash/get';
-import { useChudoTable, useColumns, useFetchData, usePagination, useResponse, useSetRows, useTable } from 'hooks';
+
+import { useChudoTable, useColumns, useFetchData, usePagination, useResponse, useSetRows, useTable, useTableMeta } from 'hooks';
 import {
   TableWrapperPropsInterface,
   TableWrapper,
   TableRootPropsInterface,
   TableRoot,
-  TableHeaderPropsInterface,
-  TableHeader,
-  TableHeaderRowPropsInterface,
-  TableHeaderRow,
+  TableHeadPropsInterface,
+  TableHead,
+  TableHeadRowPropsInterface,
+  TableHeadRow,
   TableColumnPropsInterface,
   TableColumn,
   TableBodyPropsInterface,
@@ -22,6 +24,8 @@ import {
 } from 'elements'
 import { createColumnsFromChildren } from 'utils';
 import { ChudoTablePaginationState, DataFetcherPropsInterface } from 'types';
+import { headerCaptionClassName, headerClassName, paginationCaptionClassName, paginationCaptionNumberClassName, paginationClassName, paginationNavigationClassName, paginationNavigationItemClassName, paginationNavigationLinkClassName, paginationNavigationPageActiveClassName, paginationNavigationPageClassName } from 'config';
+
 
 /**
  * Table
@@ -29,40 +33,45 @@ import { ChudoTablePaginationState, DataFetcherPropsInterface } from 'types';
 export interface TablePropsInterface<T> extends HTMLAttributes<HTMLTableElement> {
   Wrapper?: ElementType<TableWrapperPropsInterface>;
   Root?: ElementType<TableRootPropsInterface>;
-  Header?: ElementType<TableHeaderPropsInterface>;
-  HeaderRow?: ElementType<TableHeaderRowPropsInterface>;
+  Head?: ElementType<TableHeadPropsInterface>;
+  HeadRow?: ElementType<TableHeadRowPropsInterface>;
   Column?: ElementType<TableColumnPropsInterface>;
   Body?: ElementType<TableBodyPropsInterface>;
   Row?: ElementType<TableRowPropsInterface>;
   Cell?: ElementType<TableCellPropsInterface>;
+  headless?: boolean;
 }
 
 export function Table<Record = any>(props: TablePropsInterface<Record>) {
   const {
     children,
+    Wrapper = TableWrapper,
     Root = TableRoot,
-    Header = TableHeader,
-    HeaderRow = TableHeaderRow,
+    Head = TableHead,
+    HeadRow = TableHeadRow,
     Column = TableColumn,
     Body = TableBody,
     Row = TableRow,
     Cell = TableCell,
+    headless
   } = props;
 
-  const { columns, rows } = useTable<Record>()
+  const { columns, rows } = useTable<Record>();
+  const { id } = useTableMeta();
 
   return (
-    <>
-      <Root>
-        <Header>
-          <HeaderRow>
+    <Wrapper tableId={id}>
+      <Root id={id}>
+        {/* todo hide columns / set height 0 if headless */}
+        <Head>
+          <HeadRow>
             {columns.map((column) => (
               <Column key={column.accessor} type={column.type}>
                 <column.Header />
               </Column>
             ))}
-          </HeaderRow>
-        </Header>
+          </HeadRow>
+        </Head>
         <Body>
           {rows.map((row) => (
             <Row key={row.id}>
@@ -82,9 +91,31 @@ export function Table<Record = any>(props: TablePropsInterface<Record>) {
         </Body>
       </Root>
       {children}
-    </>
+    </Wrapper>
   )
 };
+
+/**
+ * Table Header
+ */
+export interface TableHeaderProps {
+  caption?: ReactNode;
+  children?: ReactNode;
+}
+
+export function TableHeader(props: TableHeaderProps) {
+  const { id } = useTableMeta();
+  const { caption, children } = props;
+
+  const tableCaption = useMemo(() => id ? `${id}-caption` : undefined, [id])
+
+  return (
+    <figcaption id={tableCaption} className={clsx(headerClassName)}>
+      <h2 className={clsx(headerCaptionClassName)}>{caption}</h2>
+      <div>{children}</div>
+    </figcaption>
+  )
+}
 
 /**
  * Columns
@@ -254,6 +285,8 @@ export function Pagination<Record = any, RemoteData = Record[]>(props: Paginatio
     setTotalPages,
     setPageSize,
     setTotalCount,
+    setCurrentPage,
+    totalCount,
     totalPages,
     currentPage,
     hasMorePages,
@@ -291,28 +324,68 @@ export function Pagination<Record = any, RemoteData = Record[]>(props: Paginatio
 
   const handlePrevPageClick = useCallback(() => {
     prevPage();
-  }, [prevPage])
+  }, [prevPage]);
 
   const handleNextPageClick = useCallback(() => {
     nextPage();
-  }, [nextPage])
+  }, [nextPage]);
+
+
+  const isPageSelected = useCallback((page: number) => page === currentPage, [currentPage])
+
+  const handlePageClick = useCallback((page: number) => () => setCurrentPage(page), [setCurrentPage])
+
+  const pages = useMemo(() =>
+    Array(totalPages).fill(-1).map((_v, index) => index + 1)
+    , [totalPages])
 
   return (
-    <>
-      <code>{
-        JSON.stringify({
-          totalPages,
-          currentPage,
-          hasMorePages,
-          hasNextPage,
-          hasPrevPage
-        })
-      }</code>
-      <div>
-        <button onClick={handlePrevPageClick} disabled={!hasPrevPage}>prev</button>
-
-        <button onClick={handleNextPageClick} disabled={!hasNextPage}>next</button>
+    <nav aria-label="Table navigation" className={paginationClassName}>
+      <div className={paginationCaptionClassName}>
+        <span >
+          Showing <span className={paginationCaptionNumberClassName}>{currentPage}</span> to <span className={paginationCaptionNumberClassName}>{totalPages}</span> of <span className={paginationCaptionNumberClassName}>{totalCount}</span>
+        </span>
       </div>
-    </>
+
+      <ul className={paginationNavigationClassName}>
+        <li className={paginationNavigationItemClassName}>
+          <button
+            type="button"
+            className={paginationNavigationPageClassName}
+            onClick={handlePrevPageClick}
+            disabled={!hasPrevPage}
+            aria-disabled={!hasPrevPage}
+          >
+            <caption>Previous page</caption>
+            <svg aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+          </button>
+        </li>
+
+        {pages.map(page => (
+          <li key={page} className={paginationNavigationItemClassName}>
+            <button
+              type="button"
+              className={clsx(paginationNavigationPageClassName, isPageSelected(page) && paginationNavigationPageActiveClassName)}
+              onClick={handlePageClick(page)}
+            >
+              {page}
+            </button>
+          </li>
+        ))}
+
+        <li className={paginationNavigationItemClassName}>
+          <button
+            type="button"
+            className={paginationNavigationPageClassName}
+            onClick={handleNextPageClick}
+            disabled={!hasNextPage}
+            aria-disabled={!hasNextPage}
+          >
+            <caption>Next page</caption>
+            <svg aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
+          </button>
+        </li>
+      </ul>
+    </nav>
   )
 };

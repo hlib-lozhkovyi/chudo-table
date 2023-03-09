@@ -63,7 +63,12 @@ export interface ChudoTableHelpers<Record, RemoteData = any> extends ChudoTableP
   setResponse: (response: RemoteData) => void;
 }
 
-export interface ChudoTableConfig<Record, Key extends AccessorKey<Record> = AccessorKey<Record>> {
+export interface ChudoTableMetaConfig {
+  id?: string;
+}
+
+export interface ChudoTableConfig<Record, Key extends AccessorKey<Record> = AccessorKey<Record>>
+  extends ChudoTableMetaConfig {
   idAccessor?: ((data: Record) => string | number) | string;
 }
 

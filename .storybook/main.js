@@ -18,9 +18,14 @@ module.exports = {
   docs: {
     autodocs: true,
   },
-  // ************* Add this **********
   webpackFinal: async (config) => {
     config.resolve.modules = [...(config.resolve.modules || []), path.resolve(__dirname, '../src')];
+
+    config.module.rules.push({
+      test: /\.(scss|sass)$/,
+      use: ['style-loader', 'css-loader', 'sass-loader'],
+      include: path.resolve(__dirname, '../'),
+    });
 
     return config;
   },

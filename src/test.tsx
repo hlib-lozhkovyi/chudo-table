@@ -8,7 +8,8 @@ import ChudoTable, {
   SelectColumn,
   ActionColumn,
   Pagination,
-  DataFetcherPropsInterface
+  DataFetcherPropsInterface,
+  TableHeader
 } from 'index';
 
 interface User {
@@ -34,23 +35,41 @@ export const Test = () => {
   }
 
   return (
-    <ChudoTable idAccessor="id">
-      <DataSource fetcher={fetcher} />
-      <DataTransformer<User, UserResponse>
-        getData={(response) => response.data}
-      />
-      <Table>
+    <ChudoTable
+      id="users"
+      idAccessor="id"
+      border
+      rounded
+    >
+      <TableHeader caption="Users" />
+      <Table headless>
         <Columns>
           <SelectColumn accessor="id" />
-          <Column accessor="avatar" Header="Avatar">
-            {({ avatar }) => <img src={avatar} style={{ width: 22, height: 22, borderRadius: '50%' }} />}
+          <Column<User> accessor="avatar" Header="Profile">
+            {({ avatar, first_name, email }) =>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <img
+                  src={avatar}
+                  alt={first_name}
+                  width={32}
+                  height={32}
+                  style={{
+                    borderRadius: '50%'
+                  }}
+                />
+                <div style={{ display: 'flex', flexDirection: 'column', fontSize: '0.8rem' }}>
+                  <span>{first_name}</span>
+                  <span style={{ color: '#434343' }}>{email}</span>
+                </div>
+              </span>
+            }
           </Column>
-          <Column accessor="email" Header="Email" />
-          <ActionColumn>
+          <Column accessor="last_name" Header="Last Name" />
+          <ActionColumn<User>>
             {({ id }) =>
               <>
-                <button onClick={() => alert(`delete ${id}`)}>Delete</button>
-                <button onClick={() => alert(`edit ${id}`)}>Edit</button>
+                <button className="btn" onClick={() => alert(`delete ${id}`)}>Delete</button>
+                <button className="btn" onClick={() => alert(`edit ${id}`)}>Edit</button>
               </>
             }
           </ActionColumn>
@@ -60,6 +79,10 @@ export const Test = () => {
         pageSize={6}
         getTotalCount={(response) => response.total}
         getTotalPages={(response) => response.total_pages}
+      />
+      <DataSource fetcher={fetcher} />
+      <DataTransformer<User, UserResponse>
+        getData={(response) => response.data}
       />
     </ChudoTable >
   )

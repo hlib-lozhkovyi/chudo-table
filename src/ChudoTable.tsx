@@ -1,25 +1,35 @@
-import './styles.css'
+import './styles.scss';
 
 import React, { ElementType, Provider, ReactNode } from 'react';
-import { TableWrapperPropsInterface, TableWrapper } from 'elements';
+import { TableContainerPropsInterface, TableContainer } from 'elements';
 
 import { UseChudoTableHook, useChudoTable } from 'hooks';
 import { ChudoTableProvider } from 'context';
 import { ChudoTableContextType } from 'types';
 
-export interface ChudoTableProps<Record> extends UseChudoTableHook<Record> {
+export interface ChudoTableProps<Record> extends UseChudoTableHook<Record>, TableContainerPropsInterface {
   children: ReactNode;
-  Wrapper?: ElementType<TableWrapperPropsInterface>;
-  wrapperProps?: Partial<TableWrapperPropsInterface>;
+  Container?: ElementType<TableContainerPropsInterface>;
 }
 
 export function ChudoTable<Record = any, RemoteData = any>(props: ChudoTableProps<Record>) {
   const {
     children,
-    Wrapper = TableWrapper,
-    wrapperProps,
-    ...hookProps
+    Container = TableContainer,
+    ...rest
   } = props;
+
+  const {
+    id,
+    idAccessor,
+
+    ...containerProps
+  } = rest
+
+  const hookProps = {
+    id,
+    idAccessor,
+  }
 
   const chudoTable = useChudoTable<Record, RemoteData>(hookProps);
 
@@ -29,9 +39,9 @@ export function ChudoTable<Record = any, RemoteData = any>(props: ChudoTableProp
 
   return (
     <TableProvider value={chudoTable}>
-      <Wrapper {...wrapperProps}>
+      <Container {...containerProps}>
         {children}
-      </Wrapper>
+      </Container>
     </TableProvider>
   )
 };

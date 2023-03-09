@@ -5,7 +5,7 @@ export const parameters = {
 
 export const decorators = [
   (Story) => (
-    <div style={{ minWidth: '600px' }}>
+    <div style={{ minWidth: '720px' }}>
       <Story />
     </div>
   ),
