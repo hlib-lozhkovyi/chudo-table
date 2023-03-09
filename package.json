@@ -1,7 +1,7 @@
 {
   "name": "chudo-table",
   "version": "0.0.1",
-  "description": "The missing react Table component.",
+  "description": "Declarative and extensible react Table library.",
   "main": "lib/index.js",
   "module": "lib/index.esm.js",
   "types": "lib/index.d.ts",
