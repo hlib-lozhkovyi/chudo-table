@@ -84,6 +84,6 @@ export const Test = () => {
       <DataTransformer<User, UserResponse>
         getData={(response) => response.data}
       />
-    </ChudoTable >
+    </ChudoTable>
   )
 }
