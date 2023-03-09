@@ -244,11 +244,11 @@ export function DataSource<Record = any, RemoteData = Record[]>(props: DataSourc
  * Data Transformer
  */
 export interface DataTransformerProps<Record, RemoteData> {
-  getData: ((response: RemoteData) => Record[]) | string;
+  getRows: ((response: RemoteData) => Record[]) | string;
 }
 
 export function DataTransformer<Record = any, RemoteData = Record[]>(props: DataTransformerProps<Record, RemoteData>) {
-  const { getData } = props;
+  const { getRows } = props;
 
   const { response } = useResponse<Record, RemoteData>()
   const { setRows } = useSetRows<Record, RemoteData>()
@@ -258,9 +258,9 @@ export function DataTransformer<Record = any, RemoteData = Record[]>(props: Data
       return;
     }
 
-    const rows = isFunction(getData)
-      ? getData(response)
-      : get(response, [getData as string])
+    const rows = isFunction(getRows)
+      ? getRows(response)
+      : get(response, [getRows as string])
 
     setRows(rows)
   }, [response])

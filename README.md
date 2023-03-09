@@ -4,6 +4,8 @@
 
 This is POC project. I'll be happy to hear any feedback or your experience. Thanks! ✨
 
+Full TypeScript support. Why not? 
+
 ### Motivation
 
 React is component-based framework. We store the application UI state in components.
@@ -26,7 +28,7 @@ useEffect(() => {
 
 ### Getting started
 
-The basic example show user table with Id, Email and First Name columns:
+The basic example show user table with Id, Email and Full Name columns:
 
 ```jsx
 const fetcher = () => {
@@ -53,34 +55,29 @@ You see? No local state, long configuration object. As simple as it is.
 What if I want to have custom renderer? Like show the avatar. Here is an example:
 
 ```jsx
-const fetcher = () => {
-  return fetch(`https://your.awesome-site.com/api/users`)
-    .then((response) => response.json());
-};
-...
 <ChudoTable>
   <Table>
     <Columns>
       <Column accessor="id" />
       <Column accessor="avatar">
-        {({ avatar, fulName }) =>
+        {({ avatar, fulName }) => (
           <img
             src={avatar}
             alt={fulName}
             width={32}
             height={32}
             style={{
-              borderRadius: '50%'
+              borderRadius: '50%',
             }}
           />
-        }
+        )}
       </Column>
       <Column accessor="email" />
       <Column accessor="fulName" />
     </Columns>
   </Table>
   <DataSource fetcher={fetcher} />
-</ChudoTable>;
+</ChudoTable>
 ```
 
 ### Custom Table Header caption?
@@ -88,21 +85,16 @@ const fetcher = () => {
 Yes, still supported.
 
 ```jsx
-const fetcher = () => {
-  return fetch(`https://your.awesome-site.com/api/users`)
-    .then((response) => response.json());
-};
-...
 <ChudoTable>
   <Table>
     <Columns>
-      <Column accessor="id" Header={null}/>
-      <Column accessor="email" Header="Email"/>
+      <Column accessor="id" Header={null} />
+      <Column accessor="email" Header="Email" />
       <Column accessor="firstName" Header="Name" />
     </Columns>
   </Table>
   <DataSource fetcher={fetcher} />
-</ChudoTable>;
+</ChudoTable>
 ```
 
 ### Response formatting
@@ -111,11 +103,6 @@ It looks nice? Still, my response looking something different, than just an arra
 No worries! You wanna transform the data? Here is `<DataTransformer />`
 
 ```jsx
-const fetcher = () => {
-  return fetch(`https://your.awesome-site.com/api/users`)
-    .then((response) => response.json());
-};
-...
 <ChudoTable>
   <Table>
     <Columns>
@@ -126,9 +113,11 @@ const fetcher = () => {
   </Table>
   <DataSource fetcher={fetcher} />
   <DataTransformer
-    getData={(response) => response.data}
+    getRaws={(response) => response.data}
+    // or even simplier
+    // getRaws="data"
   />
-</ChudoTable>;
+</ChudoTable>
 ```
 
 ### Pagination
@@ -136,11 +125,6 @@ const fetcher = () => {
 Nice. But what about pagination? No worries, here is a `<Pagination />` component.
 
 ```jsx
-const fetcher = ({ page, pageSize }) => {
-  return fetch(`https://your.awesome-site.com/api/users?page=${page}`)
-    .then((response) => response.json());
-};
-...
 <ChudoTable>
   <Table>
     <Columns>
@@ -155,10 +139,8 @@ const fetcher = ({ page, pageSize }) => {
     getTotalCount={(response) => response.total}
     getTotalPages={(response) => response.total_pages}
   />
-  <DataTransformer
-    getData={(response) => response.data}
-  />
-</ChudoTable>;
+  <DataTransformer getData={(response) => response.data} />
+</ChudoTable>
 ```
 
 ## Status
@@ -194,8 +176,10 @@ The libary is in the progress (this is pet project!). Here is a feature list in 
 - [ ] Virtualization
 - [ ] Column Group
 - [ ] Data Formatting
+- [ ] 🐛 Bugifxes :)
 
 ### Version 2
 
 - [ ] Antd Adapter
 - [ ] Material UI Adapter
+- [ ] 🐛 Bugifxes :)
