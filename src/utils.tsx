@@ -1,8 +1,8 @@
 import React, { ReactElement, ReactNode, Children } from 'react';
 import isFunction from 'lodash/isFunction'
-import { Column, SelectColumn, ActionColumn, CheckboxInput, IndeterminateCheckboxInput } from 'components';
+import { Column, SelectColumn, ActionColumn, CheckboxInput, IndeterminateCheckboxInput, ColumnProps } from 'components';
 import { ChudoTableColumn, ChudoTableColumnType } from 'types';
-import { CellWrapper, Checkbox, ColumnHeader, IndeterminateCheckbox } from 'elements';
+import { CellWrapper, ColumnHeader } from 'elements';
 
 /**
  *
@@ -20,6 +20,34 @@ export function getColumnType(node: ReactElement): ChudoTableColumnType | null {
 
     default:
       return null;
+  }
+}
+
+/**
+ * 
+ */
+
+export function getColumnResiableValueFromTheProps(props: ColumnProps) {
+  const { minWidth, maxWidth } = props;
+
+  if (!!minWidth || !!maxWidth) {
+    return true;
+  }
+
+  return false
+}
+
+/**
+ * 
+ */
+export function getColumnDefaultResizableValue(type: ChudoTableColumnType | null) {
+  switch (type) {
+    case 'select':
+    case 'action':
+      return false;
+
+    default:
+      return false;
   }
 }
 
@@ -42,8 +70,8 @@ export function createColumnsFromChildren<Record = any>(children: React.ReactNod
     }
 
     // ColumnPropsInterface
-    const { accessor, Wrapper } = element.props
-    let { children, Header } = element.props;
+    const { accessor, Wrapper, width, minWidth, maxWidth } = element.props
+    let { children, Header, resizable } = element.props;
 
     const type = getColumnType(element);
 
@@ -61,9 +89,17 @@ export function createColumnsFromChildren<Record = any>(children: React.ReactNod
       }
     }
 
+    if (!resizable) {
+      resizable = getColumnResiableValueFromTheProps(element.props)
+    }
+
     const route: ChudoTableColumn<Record> = {
       accessor,
       type,
+      resizable,
+      width,
+      minWidth,
+      maxWidth,
       Header: Header
         ? () => Header
         : () => <ColumnHeader name={accessor} />,
@@ -94,4 +130,11 @@ export function generateRowId(tableId: string | undefined, page: number, index: 
 
 export function isAllRowsSelected(rowsCount: number, pageSize: number) {
   return rowsCount === pageSize
+}
+
+/**
+ * 
+ */
+export function widthToStyleValue(width: number): string {
+  return `${width}px`
 }

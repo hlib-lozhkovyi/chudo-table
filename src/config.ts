@@ -25,6 +25,8 @@ export const tableHeadClassName = tableClassName + '__head';
 export const tableHeadRowClassName = tableHeadClassName + '__row';
 export const tableHeadColumnClassName = tableHeadRowClassName + '__cell';
 
+export const tableHeadColumnResizerClassName = tableHeadRowClassName + '__resizer';
+
 export const tableBodyClassName = tableClassName + '__body';
 export const tableBodyRowClassName = tableBodyClassName + '__row';
 export const tableBodyCellClassName = tableBodyRowClassName + '__cell';
@@ -44,3 +46,8 @@ export const paginationNavigationPageClassName = paginationNavigationItemClassNa
 export const paginationNavigationPageActiveClassName = paginationNavigationPageClassName + '--active';
 
 export const selectionPanelClassName = containerClassName + '__selection-panel';
+
+export const columnResizerClassName = containerClassName + '__resizer';
+export const columnResizerFullClassName = columnResizerClassName + '--full';
+
+export const columnResizerLineClassName = columnResizerClassName + '__line';

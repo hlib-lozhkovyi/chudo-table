@@ -1,48 +1,50 @@
-import React, { ElementType, HTMLAttributes, ReactNode, useEffect, useCallback, useMemo } from 'react';
+import React, { ElementType, HTMLAttributes, ReactNode, useEffect, useCallback, useMemo, MouseEvent } from 'react';
 import clsx from 'classnames';
 import isFunction from 'lodash/isFunction';
 import get from 'lodash/get';
 
-import { useChudoTable, useColumns, useFetchData, usePagination, useResponse, useRowSelection, useSetRows, useTable, useTableLayoutContext, useTableMeta } from 'hooks';
+import { useColumnResize, useColumns, useFetchData, usePagination, useResponse, useRowSelection, useSetRows, useTable, useTableLayoutContext, useTableMeta } from 'hooks';
 import {
-  TableWrapperPropsInterface,
+  TableWrapperProps,
   TableWrapper,
-  TableRootPropsInterface,
+  TableRootProps,
   TableRoot,
-  TableHeadPropsInterface,
+  TableHeadProps,
   TableHead,
-  TableHeadRowPropsInterface,
+  TableHeadRowProps,
   TableHeadRow,
-  TableColumnPropsInterface,
+  TableColumnProps,
   TableColumn,
-  TableBodyPropsInterface,
+  TableBodyProps,
   TableBody,
-  TableRowPropsInterface,
+  TableRowProps,
   TableRow,
-  TableCellPropsInterface,
+  TableCellProps,
   TableCell,
   IndeterminateCheckbox,
+  TableColumnResizer,
+  TableColumnResizerProps,
 } from 'elements'
 import { createColumnsFromChildren } from 'utils';
-import { ChudoTablePaginationState, DataFetcherParserResultInterface, DataFetcherPropsInterface, TableStyleContextType } from 'types';
-import { headerCaptionClassName, headerClassName, paginationBorderClassName, paginationCaptionClassName, paginationCaptionNumberClassName, paginationClassName, paginationMetaClassName, paginationNavigationClassName, paginationNavigationItemClassName, paginationNavigationLinkClassName, paginationNavigationPageActiveClassName, paginationNavigationPageClassName, selectionPanelClassName } from 'config';
-import { TableStyleProvider } from 'context';
+import { AccessorKey, ChudoTablePaginationState, DataFetcherParserResult, DataFetcherProps, TableStyleContextType } from 'types';
+import { headerCaptionClassName, headerClassName, paginationBorderClassName, paginationCaptionClassName, paginationCaptionNumberClassName, paginationClassName, paginationMetaClassName, paginationNavigationClassName, paginationNavigationItemClassName, paginationNavigationPageActiveClassName, paginationNavigationPageClassName, selectionPanelClassName, tableHeadColumnResizerClassName } from 'config';
 
 /**
  * Table
  */
-export interface TablePropsInterface<T> extends HTMLAttributes<HTMLTableElement>, TableStyleContextType {
-  Wrapper?: ElementType<TableWrapperPropsInterface>;
-  Root?: ElementType<TableRootPropsInterface>;
-  Head?: ElementType<TableHeadPropsInterface>;
-  HeadRow?: ElementType<TableHeadRowPropsInterface>;
-  Column?: ElementType<TableColumnPropsInterface>;
-  Body?: ElementType<TableBodyPropsInterface>;
-  Row?: ElementType<TableRowPropsInterface>;
-  Cell?: ElementType<TableCellPropsInterface>;
+export interface TableProps<T> extends HTMLAttributes<HTMLTableElement>, TableStyleContextType {
+  Wrapper?: ElementType<TableWrapperProps>;
+  Root?: ElementType<TableRootProps>;
+  Head?: ElementType<TableHeadProps>;
+  HeadRow?: ElementType<TableHeadRowProps>;
+  Column?: ElementType<TableColumnProps>;
+  Resizer?: ElementType<TableColumnResizerProps>;
+  Body?: ElementType<TableBodyProps>;
+  Row?: ElementType<TableRowProps>;
+  Cell?: ElementType<TableCellProps>;
 }
 
-export function Table<Record = any>(props: TablePropsInterface<Record>) {
+export function Table<Record = any>(props: TableProps<Record>) {
   const {
     children,
     Wrapper = TableWrapper,
@@ -50,6 +52,7 @@ export function Table<Record = any>(props: TablePropsInterface<Record>) {
     Head = TableHead,
     HeadRow = TableHeadRow,
     Column = TableColumn,
+    Resizer = TableColumnResizer,
     Body = TableBody,
     Row = TableRow,
     Cell = TableCell,
@@ -65,8 +68,14 @@ export function Table<Record = any>(props: TablePropsInterface<Record>) {
         <Head>
           <HeadRow>
             {columns.map((column) => (
-              <Column key={column.accessor} type={column.type}>
+              <Column key={column.accessor} type={column.type} width={column.width ?? column.minWidth}>
                 <column.Header />
+
+                {(column.resizable) && (
+                  <ColumnResizer accessor={column.accessor}>
+                    <Resizer />
+                  </ColumnResizer>
+                )}
               </Column>
             ))}
           </HeadRow>
@@ -122,11 +131,11 @@ export function TableHeader(props: TableHeaderProps) {
 /**
  * Columns
  */
-export interface ColumnsPropsInterface<Record> {
+export interface ColumnsProps<Record> {
   children: ReactNode
 }
 
-export function Columns<Record = any,>(props: ColumnsPropsInterface<Record>) {
+export function Columns<Record = any,>(props: ColumnsProps<Record>) {
   const {
     children,
   } = props;
@@ -141,18 +150,25 @@ export function Columns<Record = any,>(props: ColumnsPropsInterface<Record>) {
   return null;
 };
 
+export interface ColumnMetaDefinition {
+  width?: number | string;
+  minWidth?: number | string;
+  maxWidth?: number | string;
+  fixed?: boolean;
+  resizable?: boolean;
+}
+
 /**
  * Column
  */
-export interface ColumnPropsInterface<Record = any, K extends Extract<keyof Record, string> = Extract<keyof Record, string>> {
+export interface ColumnProps<Record = any, K extends Extract<keyof Record, string> = Extract<keyof Record, string>> extends ColumnMetaDefinition {
   accessor: K;
-  testType?: string;
   Header?: ReactNode;
   Wrapper?: ElementType;
   children?: (value: Record) => ReactNode | ReactNode;
 }
 
-export function Column<Record = any>(props: ColumnPropsInterface<Record>) {
+export function Column<Record = any>(props: ColumnProps<Record>) {
   return null;
 }
 
@@ -160,7 +176,7 @@ export function Column<Record = any>(props: ColumnPropsInterface<Record>) {
  * MetaTable
  */
 
-export interface MetaTable<Record = any> extends Omit<ColumnPropsInterface<Record>, 'accessor'> {
+export interface MetaTable<Record = any> extends Omit<ColumnProps<Record>, 'accessor'> {
 
 }
 
@@ -168,11 +184,11 @@ export interface MetaTable<Record = any> extends Omit<ColumnPropsInterface<Recor
 /**
  * Action Column
  */
-export interface ActionColumnPropsInterface<Record = any> extends MetaTable<Record> {
+export interface ActionColumnProps<Record = any> extends MetaTable<Record> {
 
 }
 
-export function ActionColumn<Record = any>(props: ActionColumnPropsInterface<Record>) {
+export function ActionColumn<Record = any>(props: ActionColumnProps<Record>) {
   return null;
 }
 
@@ -180,11 +196,11 @@ export function ActionColumn<Record = any>(props: ActionColumnPropsInterface<Rec
 /**
  * Select Column
  */
-export interface SelectColumnPropsInterface<Record = any> extends ColumnPropsInterface<Record> {
+export interface SelectColumnProps<Record = any> extends ColumnProps<Record> {
 
 }
 
-export function SelectColumn<Record = any>(props: SelectColumnPropsInterface<Record>) {
+export function SelectColumn<Record = any>(props: SelectColumnProps<Record>) {
   return null
 }
 
@@ -192,13 +208,13 @@ export function SelectColumn<Record = any>(props: SelectColumnPropsInterface<Rec
  * Data Source
  */
 
-export interface DataSourcePropsInterface<Record, RemoteData> {
+export interface DataSourceProps<Record, RemoteData> {
   data?: Record[];
-  fetcher?: (props: DataFetcherPropsInterface) => Promise<RemoteData>;
-  parse?: (response: RemoteData) => DataFetcherParserResultInterface<Record>;
+  fetcher?: (props: DataFetcherProps) => Promise<RemoteData>;
+  parse?: (response: RemoteData) => DataFetcherParserResult<Record>;
 }
 
-export function DataSource<Record = any, RemoteData = Record[]>(props: DataSourcePropsInterface<Record, RemoteData>) {
+export function DataSource<Record = any, RemoteData = Record[]>(props: DataSourceProps<Record, RemoteData>) {
   const { data, fetcher, parse } = props;
 
   const { currentPage: page, pageSize } = usePagination<Record, RemoteData>();
@@ -299,6 +315,43 @@ export function SelectedPanel(props: SelectedPanelProps) {
     </div >
   )
 }
+
+/**
+ * 
+ */
+
+export interface ColumnResizerProps<Record> {
+  accessor: AccessorKey<Record>;
+  children: ReactNode;
+}
+
+export function ColumnResizer<Record = any>(props: ColumnResizerProps<Record>) {
+  const { children, accessor } = props
+
+  const { isResizing, startResize, stopResize } = useColumnResize<Record>(accessor);
+
+  const handleMouseDown = useCallback((event: MouseEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLDivElement;
+
+    // TODO: add data-column-header-attr 
+    const columnEl = target.closest<HTMLDivElement>('[role="columnheader"]');
+
+    if (!columnEl) {
+      return;
+    }
+
+    const startOffset = (columnEl.offsetWidth - event.pageX);
+
+    startResize(startOffset)
+  }, [])
+
+  return (
+    <div className={tableHeadColumnResizerClassName} onMouseDown={handleMouseDown}>
+      {children}
+    </div>
+  )
+}
+
 
 /**
  * Pagination
@@ -466,7 +519,6 @@ export function CheckboxInput(props) {
   const checked = useMemo(() => isRowSelected(id), [id, isRowSelected])
 
   const handleChange = useCallback(() => {
-    debugger;
     toggleRowSelection(id)
   }, [toggleRowSelection, id])
 

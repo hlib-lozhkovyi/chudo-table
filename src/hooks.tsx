@@ -1,4 +1,4 @@
-import { useReducer, useMemo, Reducer, useCallback, useContext, Context, useState, ChangeEvent } from 'react';
+import { useReducer, useMemo, Reducer, useCallback, useContext, Context, useState, ChangeEvent, useRef, useEffect } from 'react';
 import isFunction from 'lodash/isFunction';
 import get from 'lodash/get';
 import { ChudoTableContext, TableStyleContext } from 'context';
@@ -16,7 +16,9 @@ import {
   ChudoTableMetaConfig,
   DataFetcherParserResultInterface,
   TableStyleContextType,
-  RecordID
+  RecordID,
+  AccessorKey,
+  ChudoTableColumnMetaConfig
 } from "types";
 import { generateRowId, isAllRowsSelected } from 'utils';
 
@@ -149,6 +151,16 @@ export function useChudoTable<Record = any, RemoteData = Record[]>(
     })
   }, []);
 
+  const updateColumn = useCallback((accessor: AccessorKey<Record>, meta: Partial<ChudoTableColumnMetaConfig>) => {
+    dispatch({
+      type: "UPDATE_COLUMN",
+      payload: {
+        accessor,
+        meta
+      }
+    })
+  }, []);
+
   const setIsLoading = useCallback(() => {
     return;
   }, []);
@@ -235,6 +247,7 @@ export function useChudoTable<Record = any, RemoteData = Record[]>(
 
   const helpers: ChudoTableHelpers<Record, RemoteData> = {
     initializeColumns,
+    updateColumn,
     getRowId,
     setIsLoading,
     setError,
@@ -480,5 +493,111 @@ export function useRowSelection<Record = any, RemoteData = Record[]>(): UseRowSe
     toggleAllRowsSelection,
     toggleRowSelection,
     isRowSelected
+  }
+}
+
+export function useColumn<
+  Record = any, RemoteData = Record[]
+>(accessor: AccessorKey<Record>): [ChudoTableColumn<Record>, (meta: Partial<ChudoTableColumnMetaConfig>) => void] {
+  const { columns, updateColumn } = useChudoTableContext<Record, RemoteData>();
+
+  const column = useMemo(() => columns.find((column) =>
+    column.accessor === accessor
+  ), [columns])
+
+  const setColumnMeta = useCallback((meta: Partial<ChudoTableColumnMetaConfig>) => {
+    updateColumn(accessor, meta)
+  }, [updateColumn])
+
+  return [column as ChudoTableColumn<Record>, setColumnMeta];
+}
+
+/**
+ * 
+ */
+
+export function useColumnWidth<Record = any>(accessor: AccessorKey<Record>): [number, (width: number) => void] {
+  const [column, updateColumn] = useColumn<Record>(accessor);
+  const { width, minWidth = 0, maxWidth = Number.MAX_SAFE_INTEGER } = column;
+
+  const setWidth = useCallback((nextWidth: number) => {
+    if (nextWidth < minWidth || nextWidth > maxWidth) {
+      return;
+    }
+
+    updateColumn({ width: nextWidth });
+  }, [updateColumn, minWidth, maxWidth])
+
+  return [width, setWidth];
+}
+
+
+/**
+ * 
+ */
+
+export interface UseColumnResizeHook {
+  isResizing: boolean;
+  startResize: (startOffset: number) => void;
+  resize: (offset: number) => void;
+  stopResize: (startOffset: number) => void;
+  breakResize: () => void;
+}
+
+
+export function useColumnResize<Record = any>(accessor: AccessorKey<Record>): UseColumnResizeHook {
+  const [, setWidth] = useColumnWidth(accessor);
+
+  const offset = useRef<Number | null>(null);
+
+  const isResizing = useMemo(() => !!offset.current, [offset.current])
+
+  const resize = useCallback((offset: number) => {
+
+  }, []);
+
+  const stopResize = useCallback((endOffset: number) => {
+    offset.current = null;
+  }, []);
+
+  const breakResize = useCallback(() => {
+    offset.current = null;
+  }, []);
+
+
+  const mouseMoveHandler = useCallback((e) => {
+    if (!offset.current) {
+      return;
+    }
+
+    const nextWidth = offset.current + e.pageX;
+
+    setWidth(nextWidth)
+  }, [])
+
+  const mouseUpHandler = () => {
+    offset.current = null;
+  }
+
+  const startResize = useCallback((startOffset: number) => {
+    offset.current = startOffset;
+
+    document.addEventListener('mousemove', mouseMoveHandler);
+    document.addEventListener('mouseup', mouseUpHandler);
+  }, []);
+
+  useEffect(function cleanUpListeners() {
+    return () => {
+      document.removeEventListener('mousemove', mouseMoveHandler);
+      document.removeEventListener('mouseup', mouseUpHandler);
+    }
+  }, [])
+
+  return {
+    isResizing,
+    startResize,
+    resize,
+    stopResize,
+    breakResize
   }
 }

@@ -9,6 +9,20 @@ export const chudoTableReducer = <Record, RemoteData>(
   switch (action.type) {
     case 'INITIALIZE_COLUMNS':
       return { ...state, columns: action.payload.columns };
+    case 'UPDATE_COLUMN':
+      return {
+        ...state,
+        columns: state.columns.map((column) => {
+          if (column.accessor === action.payload.accessor) {
+            return {
+              ...column,
+              ...action.payload.meta,
+            };
+          }
+
+          return { ...column };
+        }),
+      };
     case 'SET_RESPONSE':
       return { ...state, response: action.payload.response };
     case 'SET_ROWS':

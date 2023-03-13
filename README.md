@@ -5,7 +5,7 @@
 </p>
 
 <h3 align="center">
-  Declarative React Table library
+  🧩 Declarative React Table library
 </h3>
 
 <br>
@@ -128,10 +128,10 @@ The libary is in the progress (this is pet project!). Here is a feature list in 
 
 - [x] Basic
 - [x] Declarative Column
-- [ ] Custom Cell Rendering
+- [x] Custom Cell Rendering
 - [ ] Custom Row Rendering
 - [x] Action Column
-- [ ] Fixed Column
+- [x] Fixed Column
 - [x] Selection
 - [x] Pagination
 - [x] Basic sorting

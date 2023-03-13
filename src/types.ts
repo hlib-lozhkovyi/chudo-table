@@ -6,7 +6,14 @@ export type AccessorKey<Record = any> = Extract<keyof Record, string>;
 
 export type RecordID = string;
 
-export interface ChudoTableColumnConfig<Record, Key = AccessorKey<Record>> {
+export interface ChudoTableColumnMetaConfig {
+  resizable: boolean;
+  width: number;
+  minWidth?: number;
+  maxWidth?: number;
+}
+
+export interface ChudoTableColumnConfig<Record, Key = AccessorKey<Record>> extends ChudoTableColumnMetaConfig {
   type: ChudoTableColumnType;
   accessor: Key;
 }
@@ -39,12 +46,12 @@ export interface ChudoTableState<Record, RemoteData> extends ChudoTablePaginatio
   selectedIds: RecordID[];
 }
 
-export interface DataFetcherPropsInterface {
+export interface DataFetcherProps {
   page: ChudoTablePaginationState['currentPage'];
   pageSize?: ChudoTablePaginationState['pageSize'];
 }
 
-export interface DataFetcherParserResultInterface<Record> {
+export interface DataFetcherParserResult<Record> {
   data: Record[];
   totalPages?: ChudoTablePaginationState['totalPages'];
   totalCount?: ChudoTablePaginationState['totalCount'];
@@ -52,10 +59,11 @@ export interface DataFetcherParserResultInterface<Record> {
 
 export type ChudoTableAction<Record, RemoteData> =
   | { type: 'INITIALIZE_COLUMNS'; payload: { columns: ChudoTableColumn<Record>[] } }
+  | { type: 'UPDATE_COLUMN'; payload: { accessor: AccessorKey<Record>; meta: ChudoTableColumnMetaConfig } }
   | { type: 'SET_ROWS'; payload: { rows: ChudoTableRow<Record>[] } }
   | {
       type: 'SET_REMOTE_DATA';
-      payload: Omit<DataFetcherParserResultInterface<Record>, 'data'> & {
+      payload: Omit<DataFetcherParserResult<Record>, 'data'> & {
         rows: ChudoTableRow<Record>[];
       };
     }
@@ -78,11 +86,12 @@ export interface ChudoTablePaginationHelpers {
 
 export interface ChudoTableHelpers<Record, RemoteData> extends ChudoTablePaginationHelpers {
   initializeColumns: (columns: ChudoTableState<Record, RemoteData>['columns']) => void;
+  updateColumn: (accessor: AccessorKey<Record>, meta: Partial<ChudoTableColumnMetaConfig>) => void;
   getRowId: (data: Record) => RecordID;
   setIsLoading: (isLoading: ChudoTableState<Record, RemoteData>['isLoading']) => void;
   setError: (error: ChudoTableState<Record, RemoteData>['error']) => void;
   setRows: (rows: ChudoTableRow<Record>[]) => void;
-  setRemoteData: (daata: DataFetcherParserResultInterface<Record>) => void;
+  setRemoteData: (daata: DataFetcherParserResult<Record>) => void;
   toggleAllRowsSelection: () => void;
   toggleRowSelection: (id: RecordID) => void;
 }

@@ -21,18 +21,23 @@ import {
   containerBorderClassName,
   containerRoundedClassName,
   wrapperBorderClassName,
+  tableHeadColumnResizerClassName,
+  columnResizerClassName,
+  columnResizerFullClassName,
+  columnResizerLineClassName,
 } from 'config'
 import { ChudoTableColumnType, RecordID, TableStyleContextType } from "types";
 import { useIndeterminateCheckbox, useTableLayoutContext } from "hooks";
+import { widthToStyleValue } from "utils";
 
 /**
  * Wrapper
  */
-export interface TableContainerPropsInterface extends HTMLAttributes<HTMLDivElement>, Pick<TableStyleContextType, 'border' | 'rounded'> {
+export interface TableContainerProps extends HTMLAttributes<HTMLDivElement>, Pick<TableStyleContextType, 'border' | 'rounded'> {
   children: ReactNode;
 }
 
-export const TableContainer = (props: TableContainerPropsInterface) => {
+export const TableContainer = (props: TableContainerProps) => {
   const {
     className,
     children,
@@ -66,12 +71,12 @@ export const TableContainer = (props: TableContainerPropsInterface) => {
 /**
  * Wrapper
  */
-export interface TableWrapperPropsInterface extends HTMLAttributes<HTMLDivElement>, Omit<TableStyleContextType, 'rounded'> {
+export interface TableWrapperProps extends HTMLAttributes<HTMLDivElement>, Omit<TableStyleContextType, 'rounded'> {
   children: ReactNode;
   tableId?: string;
 }
 
-export const TableWrapper = (props: TableWrapperPropsInterface) => {
+export const TableWrapper = (props: TableWrapperProps) => {
   const {
     className,
     children,
@@ -132,11 +137,11 @@ export const TableWrapper = (props: TableWrapperPropsInterface) => {
 /**
  * Root
  */
-export interface TableRootPropsInterface extends HTMLAttributes<HTMLTableElement> {
+export interface TableRootProps extends HTMLAttributes<HTMLTableElement> {
   children: ReactNode;
 }
 
-export const TableRoot = (props: TableRootPropsInterface) => {
+export const TableRoot = (props: TableRootProps) => {
   const { className, children, ...rest } = props;
 
   const getProps = useCallback(() => rest, [rest])
@@ -156,11 +161,11 @@ export const TableRoot = (props: TableRootPropsInterface) => {
 /**
  * Head
  */
-export interface TableHeadPropsInterface extends HTMLAttributes<HTMLTableSectionElement> {
+export interface TableHeadProps extends HTMLAttributes<HTMLTableSectionElement> {
   children: ReactNode;
 }
 
-export const TableHead = (props: TableHeadPropsInterface) => {
+export const TableHead = (props: TableHeadProps) => {
   const { className, children, ...rest } = props;
 
   const getProps = useCallback(() => rest, [rest])
@@ -175,11 +180,11 @@ export const TableHead = (props: TableHeadPropsInterface) => {
 /**
  * Head Row
  */
-export interface TableHeadRowPropsInterface extends HTMLAttributes<HTMLTableRowElement> {
+export interface TableHeadRowProps extends HTMLAttributes<HTMLTableRowElement> {
   children: ReactNode;
 }
 
-export const TableHeadRow = (props: TableHeadRowPropsInterface) => {
+export const TableHeadRow = (props: TableHeadRowProps) => {
   const { className, children, ...rest } = props;
 
   const getProps = useCallback(() => rest, [rest])
@@ -194,18 +199,21 @@ export const TableHeadRow = (props: TableHeadRowPropsInterface) => {
 /**
  * Head Column
  */
-export interface TableColumnPropsInterface extends HTMLAttributes<HTMLTableCellElement> {
+export interface TableColumnProps extends HTMLAttributes<HTMLTableCellElement> {
   children: ReactNode;
+  width: number;
   type: ChudoTableColumnType;
 }
 
-export const TableColumn = (props: TableColumnPropsInterface) => {
-  const { className, children, type, ...rest } = props;
+export const TableColumn = (props: TableColumnProps) => {
+  const { className, children, width, type, ...rest } = props;
 
-  const getProps = useCallback(() => rest, [rest])
+  const getProps = useCallback(() => rest, [rest]);
 
   return (
-    <th role="columnheader" className={clsx(tableCellClassName, tableHeadColumnClassName)} data-type={type} {...getProps()}>
+    <th role="columnheader" className={clsx(tableCellClassName, tableHeadColumnClassName)} data-type={type} style={{
+      width: widthToStyleValue(width)
+    }} {...getProps()}>
       {children}
     </th>
   )
@@ -215,11 +223,11 @@ export const TableColumn = (props: TableColumnPropsInterface) => {
  * Body
  */
 
-export interface TableBodyPropsInterface extends HTMLAttributes<HTMLTableSectionElement> {
+export interface TableBodyProps extends HTMLAttributes<HTMLTableSectionElement> {
   children: ReactNode;
 }
 
-export const TableBody = (props: TableBodyPropsInterface) => {
+export const TableBody = (props: TableBodyProps) => {
   const { className, children, ...rest } = props;
 
   const getProps = useCallback(() => rest, [rest])
@@ -235,13 +243,13 @@ export const TableBody = (props: TableBodyPropsInterface) => {
  * Row
  */
 
-export interface TableRowPropsInterface extends HTMLAttributes<HTMLTableRowElement> {
+export interface TableRowProps extends HTMLAttributes<HTMLTableRowElement> {
   children: ReactNode;
   rowId: string;
   index: number;
 }
 
-export const TableRow = (props: TableRowPropsInterface) => {
+export const TableRow = (props: TableRowProps) => {
   const {
     className,
     children,
@@ -269,13 +277,13 @@ export const TableRow = (props: TableRowPropsInterface) => {
  * Cell
  */
 
-export interface TableCellPropsInterface extends HTMLAttributes<HTMLTableCellElement> {
+export interface TableCellProps extends HTMLAttributes<HTMLTableCellElement> {
   children: ReactNode;
   rowId: RecordID;
   type: ChudoTableColumnType;
 }
 
-export const TableCell = (props: TableCellPropsInterface) => {
+export const TableCell = (props: TableCellProps) => {
   const { children, type, rowId, ...rest } = props;
 
   const getProps = useCallback(() => rest, [rest])
@@ -395,4 +403,22 @@ export function SortArrow(props: SortArrowProps) {
       }
     </svg>
   );
+}
+
+/**
+ * Resizer
+ */
+
+export interface TableColumnResizerProps {
+  full?: boolean;
+}
+
+export function TableColumnResizer(props: TableColumnResizerProps) {
+  const { full } = props
+
+  return (
+    <div className={clsx(columnResizerClassName, full && columnResizerFullClassName)} >
+      <span className={columnResizerLineClassName} />
+    </div>
+  )
 }

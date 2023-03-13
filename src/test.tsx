@@ -51,7 +51,12 @@ export const Test = () => {
       <Table>
         <Columns>
           <SelectColumn accessor="id" />
-          <Column<User> accessor="avatar" Header="Profile">
+          <Column<User>
+            accessor="avatar"
+            Header="Profile"
+            width={300}
+            minWidth={40}
+          >
             {({ avatar, first_name, email }) =>
               <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <img
@@ -70,15 +75,15 @@ export const Test = () => {
               </span>
             }
           </Column>
-          <Column accessor="last_name" Header="Last Name" />
-          {/* <ActionColumn<User>>
+          <Column accessor="last_name" Header="Last Name" minWidth={110} />
+          <ActionColumn<User>>
             {({ id }) =>
               <>
                 <button className="btn" onClick={() => alert(`delete ${id}`)}>Delete</button>
                 <button className="btn" onClick={() => alert(`edit ${id}`)}>Edit</button>
               </>
             }
-          </ActionColumn> */}
+          </ActionColumn>
         </Columns>
       </Table>
       <Pagination<User, UserResponse>
