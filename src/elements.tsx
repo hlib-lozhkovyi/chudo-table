@@ -1,8 +1,13 @@
-import React, { HTMLAttributes, ReactNode, useCallback, useMemo } from "react";
+import React, { ChangeEvent, HTMLAttributes, InputHTMLAttributes, ReactNode, useCallback, useMemo, useState } from "react";
 import clsx from 'classnames';
 import {
   containerClassName,
   wrapperClassName,
+  wrapperStripeClassName,
+  wrapperRowBorderClassName,
+  wrapperCompactClassName,
+  wrapperHighlightRowClassName,
+  wrapperHighlightColumnClassName,
   tableClassName,
   tableHeadClassName,
   tableHeadRowClassName,
@@ -13,16 +18,18 @@ import {
   tableBodyCellWrapperClassName,
   tableCellClassName,
   tableRowClassName,
+  containerBorderClassName,
+  containerRoundedClassName,
+  wrapperBorderClassName,
 } from 'config'
-import { ChudoTableColumnType } from "types";
+import { ChudoTableColumnType, RecordID, TableStyleContextType } from "types";
+import { useIndeterminateCheckbox, useTableLayoutContext } from "hooks";
 
 /**
  * Wrapper
  */
-export interface TableContainerPropsInterface extends HTMLAttributes<HTMLDivElement> {
+export interface TableContainerPropsInterface extends HTMLAttributes<HTMLDivElement>, Pick<TableStyleContextType, 'border' | 'rounded'> {
   children: ReactNode;
-  border?: boolean;
-  rounded?: boolean;
 }
 
 export const TableContainer = (props: TableContainerPropsInterface) => {
@@ -36,11 +43,22 @@ export const TableContainer = (props: TableContainerPropsInterface) => {
 
   const getProps = useCallback(() => rest, [rest])
 
+  const {
+    border: tableBorder
+  } = useTableLayoutContext();
+
+  const layoutStyles = {
+    border: border ?? tableBorder,
+  }
+
   return (
-    <figure {...getProps()} className={clsx(containerClassName, {
-      [containerClassName + '--border']: border,
-      [containerClassName + '--rounded']: rounded,
-    })}>
+    <figure
+      {...getProps()}
+      className={clsx(containerClassName, {
+        [containerBorderClassName]: layoutStyles.border,
+        [containerRoundedClassName]: rounded,
+      })}
+    >
       {children}
     </figure>
   )
@@ -48,22 +66,58 @@ export const TableContainer = (props: TableContainerPropsInterface) => {
 /**
  * Wrapper
  */
-export interface TableWrapperPropsInterface extends HTMLAttributes<HTMLDivElement> {
+export interface TableWrapperPropsInterface extends HTMLAttributes<HTMLDivElement>, Omit<TableStyleContextType, 'rounded'> {
   children: ReactNode;
   tableId?: string;
 }
 
 export const TableWrapper = (props: TableWrapperPropsInterface) => {
-  const { className, children, tableId, ...rest } = props;
+  const {
+    className,
+    children,
+    tableId,
+    border,
+    stripe,
+    rowBorder,
+    compact,
+    highlightRow,
+    highlightColumn,
+    ...rest
+  } = props;
 
-  const getProps = useCallback(() => rest, [rest])
+  const {
+    border: tableBorder,
+    stripe: tableStripe,
+    rowBorder: tableRowBorder,
+    compact: tableCompact,
+    highlightRow: tableHighlightRow,
+    highlightColumn: tableHighlightColumn
+  } = useTableLayoutContext();
 
-  const tableCaption = useMemo(() => tableId ? `${tableId}-caption` : undefined, [tableId])
+  const layoutStyles = {
+    border: border ?? tableBorder,
+    stripe: stripe ?? tableStripe,
+    rowBorder: rowBorder ?? tableRowBorder,
+    compact: compact ?? tableCompact,
+    highlightRow: highlightRow ?? tableHighlightRow,
+    highlightColumn: highlightColumn ?? tableHighlightColumn,
+  }
+
+  const getProps = useCallback(() => rest, [rest]);
+
+  const tableCaption = useMemo(() => tableId ? `${tableId}-caption` : undefined, [tableId]);
 
   return (
     <div
       tabIndex={0}
-      className={clsx(wrapperClassName)}
+      className={clsx(wrapperClassName, {
+        [wrapperBorderClassName]: layoutStyles.border,
+        [wrapperStripeClassName]: layoutStyles.stripe,
+        [wrapperRowBorderClassName]: layoutStyles.rowBorder,
+        [wrapperCompactClassName]: layoutStyles.compact,
+        [wrapperHighlightRowClassName]: layoutStyles.highlightRow,
+        [wrapperHighlightColumnClassName]: layoutStyles.highlightColumn,
+      })}
       role="group"
       {...(tableCaption && ({
         'aria-labelledby': tableCaption
@@ -183,15 +237,29 @@ export const TableBody = (props: TableBodyPropsInterface) => {
 
 export interface TableRowPropsInterface extends HTMLAttributes<HTMLTableRowElement> {
   children: ReactNode;
+  rowId: string;
+  index: number;
 }
 
 export const TableRow = (props: TableRowPropsInterface) => {
-  const { className, children, ...rest } = props;
+  const {
+    className,
+    children,
+    rowId,
+    index,
+    ...rest
+  } = props;
 
   const getProps = useCallback(() => rest, [rest])
 
   return (
-    <tr role="row" className={clsx(tableRowClassName, tableBodyRowClassName)} {...getProps()}>
+    <tr
+      role="row"
+      className={clsx(tableRowClassName, tableBodyRowClassName)}
+      data-row-id={rowId}
+      data-index={index}
+      {...getProps()}
+    >
       {children}
     </tr>
   )
@@ -203,15 +271,23 @@ export const TableRow = (props: TableRowPropsInterface) => {
 
 export interface TableCellPropsInterface extends HTMLAttributes<HTMLTableCellElement> {
   children: ReactNode;
+  rowId: RecordID;
+  type: ChudoTableColumnType;
 }
 
 export const TableCell = (props: TableCellPropsInterface) => {
-  const { children, ...rest } = props;
+  const { children, type, rowId, ...rest } = props;
 
   const getProps = useCallback(() => rest, [rest])
 
   return (
-    <td role="cell" className={clsx(tableCellClassName, tableBodyCellClassName)} {...getProps()}>
+    <td
+      role="cell"
+      data-type={type}
+      data-row-id={rowId}
+      className={clsx(tableCellClassName, tableBodyCellClassName)}
+      {...getProps()}
+    >
       {children}
     </td>
   )
@@ -229,6 +305,43 @@ export function ColumnHeader(props: ColumnHeaderProps) {
 
   return <>{name}</>
   return <>{name}<SortArrow sortDir={"ascending"} /></>
+}
+
+/**
+ * Checkbox
+ */
+export interface IndeterminateCheckbox extends InputHTMLAttributes<HTMLInputElement> {
+  indeterminate?: boolean;
+}
+
+export function IndeterminateCheckbox(props: IndeterminateCheckbox) {
+  const {
+    indeterminate,
+    checked,
+    ...rest
+  } = props;
+
+  const isFullyChecked = useMemo(() => checked && !indeterminate, [indeterminate, checked]);
+
+  return (
+    <label className="chudo__checkbox">
+      <input
+        checked={checked}
+        aria-checked={checked}
+        className="chudo__checkbox__input"
+        data-indeterminate={indeterminate}
+        type="checkbox"
+        {...rest}
+      />
+      <svg viewBox="0 0 24 24" role="presentation" className="chudo__checkbox__icon">
+        <g fill-rule="evenodd">
+          <rect fill="currentColor" x="6" y="6" width="12" height="12" rx="2" />
+          {isFullyChecked && <path d="M9.707 11.293a1 1 0 1 0-1.414 1.414l2 2a1 1 0 0 0 1.414 0l4-4a1 1 0 1 0-1.414-1.414L11 12.586l-1.293-1.293z" fill="inherit" />}
+          {indeterminate && < rect fill="inherit" x="8" y="11" width="8" height="2" rx="1"></rect>}
+        </g>
+      </svg>
+    </label >
+  )
 }
 
 /**

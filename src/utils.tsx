@@ -1,8 +1,8 @@
 import React, { ReactElement, ReactNode, Children } from 'react';
 import isFunction from 'lodash/isFunction'
-import { Column, SelectColumn, ActionColumn } from 'components';
+import { Column, SelectColumn, ActionColumn, CheckboxInput, IndeterminateCheckboxInput } from 'components';
 import { ChudoTableColumn, ChudoTableColumnType } from 'types';
-import { CellWrapper, ColumnHeader } from 'elements';
+import { CellWrapper, Checkbox, ColumnHeader, IndeterminateCheckbox } from 'elements';
 
 /**
  *
@@ -42,7 +42,8 @@ export function createColumnsFromChildren<Record = any>(children: React.ReactNod
     }
 
     // ColumnPropsInterface
-    const { accessor, Header, Wrapper, children } = element.props
+    const { accessor, Wrapper } = element.props
+    let { children, Header } = element.props;
 
     const type = getColumnType(element);
 
@@ -50,7 +51,17 @@ export function createColumnsFromChildren<Record = any>(children: React.ReactNod
       return;
     }
 
-    let route: ChudoTableColumn<Record> = {
+    if (type === 'select') {
+      if (!children) {
+        children = CheckboxInput;
+      }
+
+      if (!Header) {
+        Header = <IndeterminateCheckboxInput />;
+      }
+    }
+
+    const route: ChudoTableColumn<Record> = {
       accessor,
       type,
       Header: Header
@@ -68,4 +79,19 @@ export function createColumnsFromChildren<Record = any>(children: React.ReactNod
   });
 
   return columns;
+}
+
+/**
+ * 
+ */
+export function generateRowId(tableId: string | undefined, page: number, index: number) {
+  return `${tableId}-row-${page}.${index}`;
+}
+
+/**
+ * 
+ */
+
+export function isAllRowsSelected(rowsCount: number, pageSize: number) {
+  return rowsCount === pageSize
 }

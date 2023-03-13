@@ -4,10 +4,10 @@ import React, { ElementType, Provider, ReactNode } from 'react';
 import { TableContainerPropsInterface, TableContainer } from 'elements';
 
 import { UseChudoTableHook, useChudoTable } from 'hooks';
-import { ChudoTableProvider } from 'context';
-import { ChudoTableContextType } from 'types';
+import { ChudoTableProvider, TableStyleProvider } from 'context';
+import { ChudoTableContextType, TableStyleContextType } from 'types';
 
-export interface ChudoTableProps<Record> extends UseChudoTableHook<Record>, TableContainerPropsInterface {
+export interface ChudoTableProps<Record> extends UseChudoTableHook<Record>, TableContainerPropsInterface, TableStyleContextType {
   children: ReactNode;
   Container?: ElementType<TableContainerPropsInterface>;
 }
@@ -16,6 +16,12 @@ export function ChudoTable<Record = any, RemoteData = any>(props: ChudoTableProp
   const {
     children,
     Container = TableContainer,
+    border,
+    stripe,
+    rowBorder,
+    compact,
+    highlightRow,
+    highlightColumn,
     ...rest
   } = props;
 
@@ -37,11 +43,23 @@ export function ChudoTable<Record = any, RemoteData = any>(props: ChudoTableProp
     ChudoTableProvider as unknown
   ) as Provider<ChudoTableContextType<Record, RemoteData>>;
 
+
+  const tableStyle: TableStyleContextType = {
+    border,
+    stripe,
+    rowBorder,
+    compact,
+    highlightRow,
+    highlightColumn,
+  }
+
   return (
     <TableProvider value={chudoTable}>
-      <Container {...containerProps}>
-        {children}
-      </Container>
+      <TableStyleProvider value={tableStyle}>
+        <Container {...containerProps}>
+          {children}
+        </Container>
+      </TableStyleProvider>
     </TableProvider>
   )
 };

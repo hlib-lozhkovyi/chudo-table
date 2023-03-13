@@ -1,7 +1,7 @@
-import { useReducer, useMemo, Reducer, useCallback, useContext, Context } from 'react';
+import { useReducer, useMemo, Reducer, useCallback, useContext, Context, useState, ChangeEvent } from 'react';
 import isFunction from 'lodash/isFunction';
 import get from 'lodash/get';
-import { ChudoTableContext } from 'context';
+import { ChudoTableContext, TableStyleContext } from 'context';
 import { chudoTableReducer } from 'reducer';
 import {
   ChudoTableContextType,
@@ -13,8 +13,67 @@ import {
   ChudoTableColumn,
   ChudoTablePaginationState,
   ChudoTablePaginationHelpers,
-  ChudoTableMetaConfig
+  ChudoTableMetaConfig,
+  DataFetcherParserResultInterface,
+  TableStyleContextType,
+  RecordID
 } from "types";
+import { generateRowId, isAllRowsSelected } from 'utils';
+
+/**
+ * 
+ */
+
+export interface UseIndeterminateCheckboxState {
+  checked: boolean;
+  indeterminate: boolean;
+}
+
+export interface UseIndeterminateCheckboxHook extends UseIndeterminateCheckboxState {
+  handleCheckboxChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  handleIndeterminateChange: () => void;
+}
+
+export function useIndeterminateCheckbox(): UseIndeterminateCheckboxHook {
+  const [state, dispatch] = useReducer(
+    (state: UseIndeterminateCheckboxState, action: { type: 'CHECKED'; payload: { checked: boolean } }
+      | { type: 'INDETERMINATE' }) => {
+      switch (action.type) {
+        case 'CHECKED':
+          return {
+            ...state,
+            checked: action.payload.checked,
+            indeterminate: false,
+          };
+        case 'INDETERMINATE':
+          return {
+            ...state,
+            checked: false,
+            indeterminate: true,
+          };
+        default:
+          return state;
+      }
+    }, {
+    checked: false,
+    indeterminate: false,
+  });
+
+  const handleCheckboxChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    const { checked } = e.target;
+    dispatch({ type: 'CHECKED', payload: { checked } });
+  }, []);
+
+  const handleIndeterminateChange = useCallback(() => {
+    dispatch({ type: 'INDETERMINATE' });
+  }, []);
+
+  return {
+    ...state,
+    handleCheckboxChange,
+    handleIndeterminateChange
+  }
+}
 
 /**
  * 
@@ -38,7 +97,8 @@ export function useChudoTable<Record = any, RemoteData = Record[]>(
   props: UseChudoTableHook<Record>
 ): ChudoTableContextType<Record, RemoteData> {
   const {
-    idAccessor
+    idAccessor,
+    id: tableId
   } = props
 
   const [state, dispatch] = useReducer<
@@ -52,8 +112,33 @@ export function useChudoTable<Record = any, RemoteData = Record[]>(
     currentPage: 1,
     totalPages: 1,
     pageSize: 10,
-    totalCount: 0
+    totalCount: 0,
+    selectedIds: []
   });
+
+  const getRowId = useCallback((data: Record): RecordID => {
+    const id: string | number = isFunction(idAccessor)
+      ? idAccessor(data)
+      : get(data, [idAccessor as string]);
+
+    return id as RecordID;
+  }, [idAccessor])
+
+  const createTableRowsFromData = useCallback((data: Record[]) => {
+    return data.map((_row, index) => {
+      const data = {
+        ..._row,
+        _id: getRowId(_row) ?? generateRowId(tableId, state.currentPage, index),
+      }
+
+      return ({
+        ...data,
+        getCellValue: function (key) {
+          return get(data, [key])
+        }
+      }) as ChudoTableRow<Record>
+    })
+  }, [tableId, state.currentPage, getRowId])
 
   const initializeColumns = useCallback((columns: ChudoTableColumn<Record>[]) => {
     dispatch({
@@ -64,14 +149,6 @@ export function useChudoTable<Record = any, RemoteData = Record[]>(
     })
   }, []);
 
-  const getRowId = useCallback((data: Record): string | number => {
-    const id: string | number = isFunction(idAccessor)
-      ? idAccessor(data)
-      : get(data, [idAccessor as string]);
-
-    return id;
-  }, [idAccessor])
-
   const setIsLoading = useCallback(() => {
     return;
   }, []);
@@ -80,23 +157,30 @@ export function useChudoTable<Record = any, RemoteData = Record[]>(
     return;
   }, []);
 
-  const setRows = useCallback((rows: ChudoTableRow<Record>[]) => {
+  const setRows = useCallback((data: Record[]) => {
+    const rows = createTableRowsFromData(data);
+
     dispatch({
       type: "SET_ROWS",
       payload: {
         rows
       }
     });
-  }, []);
+  }, [createTableRowsFromData]);
 
-  const setResponse = useCallback((response: RemoteData) => {
+  const setRemoteData = useCallback((remoteData: DataFetcherParserResultInterface<Record>) => {
+    const { data, ...rest } = remoteData;
+
+    const rows = createTableRowsFromData(data);
+
     dispatch({
-      type: "SET_RESPONSE",
+      type: "SET_REMOTE_DATA",
       payload: {
-        response
+        rows,
+        ...rest
       }
     });
-  }, []);
+  }, [createTableRowsFromData]);
 
   const setCurrentPage = useCallback((currentPage: number) => {
     dispatch({
@@ -134,17 +218,34 @@ export function useChudoTable<Record = any, RemoteData = Record[]>(
     });
   }, []);
 
+  const toggleAllRowsSelection = useCallback(() => {
+    dispatch({
+      type: "TOGGLE_ALL_ROWS_SELECTION"
+    });
+  }, []);
+
+  const toggleRowSelection = useCallback((id: string) => {
+    dispatch({
+      type: "TOGGLE_ROW_SELECTION",
+      payload: {
+        id
+      }
+    });
+  }, []);
+
   const helpers: ChudoTableHelpers<Record, RemoteData> = {
     initializeColumns,
     getRowId,
     setIsLoading,
     setError,
     setRows,
-    setResponse,
+    setRemoteData,
     setCurrentPage,
     setTotalPages,
     setPageSize,
     setTotalCount,
+    toggleAllRowsSelection,
+    toggleRowSelection
   }
 
   const ctx = {
@@ -154,6 +255,17 @@ export function useChudoTable<Record = any, RemoteData = Record[]>(
   }
 
   return ctx;
+}
+
+/**
+ * 
+ */
+export function useTableLayoutContext() {
+  const tableLayout = useContext<TableStyleContextType>(
+    TableStyleContext as unknown as Context<TableStyleContextType>,
+  );
+
+  return tableLayout;
 }
 
 export interface UseTableMetaHook {
@@ -171,11 +283,11 @@ export function useTableMeta<Record, RemoteData>(): UseTableMetaHook {
 /**
  * 
  */
-export interface UseColumnsHook<Record> {
-  initializeColumns: ChudoTableHelpers<Record>["initializeColumns"]
+export interface UseColumnsHook<Record, RemoteData> {
+  initializeColumns: ChudoTableHelpers<Record, RemoteData>["initializeColumns"]
 }
 
-export function useColumns<Record, RemoteData>(): UseColumnsHook<Record> {
+export function useColumns<Record, RemoteData>(): UseColumnsHook<Record, RemoteData> {
   const { initializeColumns } = useChudoTableContext<Record, RemoteData>();
 
   return { initializeColumns }
@@ -187,12 +299,12 @@ export function useColumns<Record, RemoteData>(): UseColumnsHook<Record> {
 export interface UseFetchDataHook<Record, RemoteData> {
   startFetching: () => void;
   stopFetching: () => void;
-  setResponse: (response: RemoteData) => void;
+  setRemoteData: (data: DataFetcherParserResultInterface<Record>) => void;
   handleFetchError: (error: Error) => void;
 }
 
 export function useFetchData<Record = Object, RemoteData = Record[]>(): UseFetchDataHook<Record, RemoteData> {
-  const { setIsLoading, setResponse, setError } = useChudoTableContext<Record, RemoteData>();
+  const { setIsLoading, setRemoteData, setError } = useChudoTableContext<Record, RemoteData>();
 
   const startFetching = useCallback(() => setIsLoading(true), [setIsLoading]);
 
@@ -206,7 +318,7 @@ export function useFetchData<Record = Object, RemoteData = Record[]>(): UseFetch
   return {
     startFetching,
     stopFetching,
-    setResponse,
+    setRemoteData,
     handleFetchError
   };
 };
@@ -249,11 +361,14 @@ export interface UseSetRowsHook<Record, RemoteData> {
 }
 
 export function useSetRows<Record = any, RemoteData = Record[]>(): UseSetRowsHook<Record, RemoteData> {
-  const { getRowId, setRows: setTableRaws, currentPage } = useChudoTableContext<Record, RemoteData>();
+  const { id: tableId, getRowId, setRows: setTableRaws, currentPage } = useChudoTableContext<Record, RemoteData>();
 
   const setRows = useCallback((data: Record[]) => {
     const rows: ChudoTableRow<Record>[] = data.map((_row, index) => {
-      const data = { id: getRowId(_row) ?? currentPage + index, ..._row }
+      const data = {
+        _id: getRowId(_row) ?? generateRowId(tableId, currentPage, index),
+        ..._row
+      }
 
       return ({
         ...data,
@@ -264,7 +379,7 @@ export function useSetRows<Record = any, RemoteData = Record[]>(): UseSetRowsHoo
     })
 
     setTableRaws(rows)
-  }, [getRowId, setTableRaws, currentPage])
+  }, [getRowId, tableId, setTableRaws, currentPage])
 
   return {
     setRows
@@ -330,5 +445,40 @@ export function usePagination<Record = any, RemoteData = Record[]>(): UsePaginat
     hasPrevPage,
     nextPage,
     prevPage
+  }
+}
+
+/**
+ * 
+ */
+export interface UseRowSelectionHook<Record, RemoteData> {
+  isSomeSelected: boolean;
+  isAllSelected: boolean;
+  selectedCount: number;
+  selectedIds: RecordID[];
+  toggleAllRowsSelection: ChudoTableHelpers<Record, RemoteData>["toggleAllRowsSelection"];
+  toggleRowSelection: ChudoTableHelpers<Record, RemoteData>["toggleRowSelection"];
+  isRowSelected: (id: RecordID) => boolean;
+}
+
+export function useRowSelection<Record = any, RemoteData = Record[]>(): UseRowSelectionHook<Record, RemoteData> {
+  const { pageSize, selectedIds, toggleAllRowsSelection, toggleRowSelection } = useChudoTableContext<Record, RemoteData>();
+
+  const selectedCount = useMemo(() => selectedIds?.length, [selectedIds])
+
+  const isSomeSelected = useMemo(() => selectedCount > 0, [selectedCount])
+
+  const isAllSelected = useMemo(() => isAllRowsSelected(selectedCount, pageSize), [selectedCount, pageSize])
+
+  const isRowSelected = useCallback((id: RecordID) => selectedIds.includes(id), [selectedIds])
+
+  return {
+    isSomeSelected,
+    isAllSelected,
+    selectedCount,
+    selectedIds,
+    toggleAllRowsSelection,
+    toggleRowSelection,
+    isRowSelected
   }
 }

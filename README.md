@@ -4,7 +4,7 @@
 
 This is POC project. I'll be happy to hear any feedback or your experience. Thanks! ✨
 
-Full TypeScript support. Why not? 
+Full TypeScript support. Why not?
 
 ### Motivation
 
@@ -133,13 +133,12 @@ Nice. But what about pagination? No worries, here is a `<Pagination />` componen
       <Column accessor="firstName" />
     </Columns>
   </Table>
-  <DataSource fetcher={fetcher} />
   <Pagination
     pageSize={10}
     getTotalCount={(response) => response.total}
     getTotalPages={(response) => response.total_pages}
   />
-  <DataTransformer getData={(response) => response.data} />
+  <DataSource fetcher={fetcher} />
 </ChudoTable>
 ```
 
@@ -153,13 +152,13 @@ The libary is in the progress (this is pet project!). Here is a feature list in 
 - [x] Declarative Column
 - [ ] Custom Cell Rendering
 - [ ] Custom Row Rendering
-- [ ] Action Column
+- [x] Action Column
 - [ ] Fixed Column
-- [ ] Selection
+- [x] Selection
 - [x] Pagination
 - [x] Basic sorting
 - [ ] Searching
-- [ ] Layouts and styling
+- [x] Layouts and styling
 
 #### Pre-beta
 

@@ -4,6 +4,8 @@ export type ChudoTableColumnType = 'common' | 'select' | 'action';
 
 export type AccessorKey<Record = any> = Extract<keyof Record, string>;
 
+export type RecordID = string;
+
 export interface ChudoTableColumnConfig<Record, Key = AccessorKey<Record>> {
   type: ChudoTableColumnType;
   accessor: Key;
@@ -17,7 +19,7 @@ export interface ChudoTableColumn<Record, Key extends AccessorKey<Record> = Acce
 }
 
 export type ChudoTableRow<Record, Key extends AccessorKey<Record> = AccessorKey<Record>> = Record & {
-  id: any;
+  _id: RecordID;
   getCellValue: (accessor: Key) => Record[Key];
 };
 
@@ -34,18 +36,38 @@ export interface ChudoTableState<Record, RemoteData> extends ChudoTablePaginatio
   response: RemoteData | null;
   columns: ChudoTableColumn<Record>[];
   rows: ChudoTableRow<Record>[];
+  selectedIds: RecordID[];
+}
+
+export interface DataFetcherPropsInterface {
+  page: ChudoTablePaginationState['currentPage'];
+  pageSize?: ChudoTablePaginationState['pageSize'];
+}
+
+export interface DataFetcherParserResultInterface<Record> {
+  data: Record[];
+  totalPages?: ChudoTablePaginationState['totalPages'];
+  totalCount?: ChudoTablePaginationState['totalCount'];
 }
 
 export type ChudoTableAction<Record, RemoteData> =
   | { type: 'INITIALIZE_COLUMNS'; payload: { columns: ChudoTableColumn<Record>[] } }
   | { type: 'SET_ROWS'; payload: { rows: ChudoTableRow<Record>[] } }
+  | {
+      type: 'SET_REMOTE_DATA';
+      payload: Omit<DataFetcherParserResultInterface<Record>, 'data'> & {
+        rows: ChudoTableRow<Record>[];
+      };
+    }
   | { type: 'SET_RESPONSE'; payload: { response: RemoteData } }
   | { type: 'SET_IS_LOADING' }
   | { type: 'SET_ERROR'; payload: { error: Error } }
   | { type: 'SET_CURRENT_PAGE'; payload: { currentPage: ChudoTablePaginationState['currentPage'] } }
   | { type: 'SET_TOTAL_PAGES'; payload: { totalPages: ChudoTablePaginationState['totalPages'] } }
   | { type: 'SET_PAGE_SIZE'; payload: { pageSize: ChudoTablePaginationState['pageSize'] } }
-  | { type: 'SET_TOTAL_COUNT'; payload: { totalCount: ChudoTablePaginationState['totalCount'] } };
+  | { type: 'SET_TOTAL_COUNT'; payload: { totalCount: ChudoTablePaginationState['totalCount'] } }
+  | { type: 'TOGGLE_ALL_ROWS_SELECTION' }
+  | { type: 'TOGGLE_ROW_SELECTION'; payload: { id: string } };
 
 export interface ChudoTablePaginationHelpers {
   setCurrentPage: (currentPage: number) => void;
@@ -54,13 +76,15 @@ export interface ChudoTablePaginationHelpers {
   setTotalCount: (totalCount: number) => void;
 }
 
-export interface ChudoTableHelpers<Record, RemoteData = any> extends ChudoTablePaginationHelpers {
+export interface ChudoTableHelpers<Record, RemoteData> extends ChudoTablePaginationHelpers {
   initializeColumns: (columns: ChudoTableState<Record, RemoteData>['columns']) => void;
-  getRowId: (data: Record) => string | number;
+  getRowId: (data: Record) => RecordID;
   setIsLoading: (isLoading: ChudoTableState<Record, RemoteData>['isLoading']) => void;
   setError: (error: ChudoTableState<Record, RemoteData>['error']) => void;
   setRows: (rows: ChudoTableRow<Record>[]) => void;
-  setResponse: (response: RemoteData) => void;
+  setRemoteData: (daata: DataFetcherParserResultInterface<Record>) => void;
+  toggleAllRowsSelection: () => void;
+  toggleRowSelection: (id: RecordID) => void;
 }
 
 export interface ChudoTableMetaConfig {
@@ -69,13 +93,19 @@ export interface ChudoTableMetaConfig {
 
 export interface ChudoTableConfig<Record, Key extends AccessorKey<Record> = AccessorKey<Record>>
   extends ChudoTableMetaConfig {
-  idAccessor?: ((data: Record) => string | number) | string;
+  idAccessor?: ((data: Record) => RecordID) | RecordID;
 }
 
 export type ChudoTableContextType<Record, RemoteData> = ChudoTableState<Record, RemoteData> &
-  ChudoTableHelpers<Record> &
+  ChudoTableHelpers<Record, RemoteData> &
   ChudoTableConfig<Record>;
 
-export interface DataFetcherPropsInterface {
-  page?: number;
+export interface TableStyleContextType {
+  border?: boolean;
+  rounded?: boolean;
+  stripe?: boolean;
+  rowBorder?: boolean;
+  compact?: boolean;
+  highlightRow?: boolean;
+  highlightColumn?: boolean;
 }

@@ -11,6 +11,7 @@ import ChudoTable, {
   DataFetcherPropsInterface,
   TableHeader
 } from 'index';
+import { SelectedPanel } from 'components';
 
 interface User {
   id: string;
@@ -29,7 +30,7 @@ interface UserResponse {
 }
 
 export const Test = () => {
-  const fetcher = ({ page }: DataFetcherPropsInterface): Promise<User[]> => {
+  const fetcher = ({ page }: DataFetcherPropsInterface): Promise<UserResponse> => {
     return fetch(`https://reqres.in/api/users?page=${page}`)
       .then(response => response.json())
   }
@@ -38,11 +39,16 @@ export const Test = () => {
     <ChudoTable
       id="users"
       idAccessor="id"
+      // rounded
       border
-      rounded
+      stripe
+      rowBorder
+      compact
+      highlightRow
+      highlightColumn
     >
       <TableHeader caption="Users" />
-      <Table headless>
+      <Table>
         <Columns>
           <SelectColumn accessor="id" />
           <Column<User> accessor="avatar" Header="Profile">
@@ -77,12 +83,14 @@ export const Test = () => {
       </Table>
       <Pagination<User, UserResponse>
         pageSize={6}
-        getTotalCount={(response) => response.total}
-        getTotalPages={(response) => response.total_pages}
       />
-      <DataSource fetcher={fetcher} />
-      <DataTransformer<User, UserResponse>
-        getData={(response) => response.data}
+      <DataSource<User, UserResponse>
+        fetcher={fetcher}
+        parse={(response) => ({
+          data: response.data,
+          totalPages: response.total_pages,
+          totalCount: response.total
+        })}
       />
     </ChudoTable>
   )
