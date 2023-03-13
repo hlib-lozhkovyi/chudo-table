@@ -26,7 +26,14 @@ export const chudoTableReducer = <Record, RemoteData>(
     case 'SET_RESPONSE':
       return { ...state, response: action.payload.response };
     case 'SET_ROWS':
-      return { ...state, isLoading: false, error: null, rows: action.payload.rows };
+      return {
+        ...state,
+        isLoading: false,
+        error: null,
+        rows: action.payload.rows,
+        totalPages: 1,
+        totalCount: action.payload.rows.length,
+      };
     case 'SET_REMOTE_DATA':
       return {
         ...state,
@@ -51,7 +58,7 @@ export const chudoTableReducer = <Record, RemoteData>(
     case 'TOGGLE_ALL_ROWS_SELECTION':
       return {
         ...state,
-        selectedIds: state.selectedIds.length > 0 ? [] : state.rows.map(({ _id }) => _id),
+        selectedIds: state.selectedIds.length > 0 ? [] : state.rows.map(({ id }) => id),
       };
     case 'TOGGLE_ROW_SELECTION':
       return { ...state, selectedIds: xor(state.selectedIds, [action.payload.id]) };

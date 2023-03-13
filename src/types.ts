@@ -1,16 +1,20 @@
 import { FunctionComponent, ElementType } from 'react';
 
-export type ChudoTableColumnType = 'common' | 'select' | 'action';
-
 export type AccessorKey<Record = any> = Extract<keyof Record, string>;
 
 export type RecordID = string;
+
+export type ChudoTableColumnType = 'common' | 'select' | 'action';
+
+export type ChudoTableColumnAlignment = 'left' | 'center' | 'right';
 
 export interface ChudoTableColumnMetaConfig {
   resizable: boolean;
   width: number;
   minWidth?: number;
   maxWidth?: number;
+  sortable?: boolean;
+  alignment: ChudoTableColumnAlignment;
 }
 
 export interface ChudoTableColumnConfig<Record, Key = AccessorKey<Record>> extends ChudoTableColumnMetaConfig {
@@ -25,9 +29,10 @@ export interface ChudoTableColumn<Record, Key extends AccessorKey<Record> = Acce
   Cell: FunctionComponent<{ value: Record[Key] } & Record>;
 }
 
-export type ChudoTableRow<Record, Key extends AccessorKey<Record> = AccessorKey<Record>> = Record & {
-  _id: RecordID;
-  getCellValue: (accessor: Key) => Record[Key];
+export type ChudoTableRow<Record> = {
+  id: RecordID;
+  index: number;
+  _raw: Record;
 };
 
 export interface ChudoTablePaginationState {
@@ -90,7 +95,7 @@ export interface ChudoTableHelpers<Record, RemoteData> extends ChudoTablePaginat
   getRowId: (data: Record) => RecordID;
   setIsLoading: (isLoading: ChudoTableState<Record, RemoteData>['isLoading']) => void;
   setError: (error: ChudoTableState<Record, RemoteData>['error']) => void;
-  setRows: (rows: ChudoTableRow<Record>[]) => void;
+  setRows: (rows: Record[]) => void;
   setRemoteData: (daata: DataFetcherParserResult<Record>) => void;
   toggleAllRowsSelection: () => void;
   toggleRowSelection: (id: RecordID) => void;

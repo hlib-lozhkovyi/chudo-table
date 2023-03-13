@@ -26,8 +26,8 @@ import {
   columnResizerFullClassName,
   columnResizerLineClassName,
 } from 'config'
-import { ChudoTableColumnType, RecordID, TableStyleContextType } from "types";
-import { useIndeterminateCheckbox, useTableLayoutContext } from "hooks";
+import { ChudoTableColumnAlignment, ChudoTableColumnType, RecordID, TableStyleContextType } from "types";
+import { useIndeterminateCheckbox, useTableCaption, useTableLayoutContext } from "hooks";
 import { widthToStyleValue } from "utils";
 
 /**
@@ -110,11 +110,15 @@ export const TableWrapper = (props: TableWrapperProps) => {
 
   const getProps = useCallback(() => rest, [rest]);
 
-  const tableCaption = useMemo(() => tableId ? `${tableId}-caption` : undefined, [tableId]);
+  const tableCaption = useTableCaption(tableId);
 
   return (
     <div
       tabIndex={0}
+      role="group"
+      {...(tableCaption && ({
+        'aria-labelledby': tableCaption
+      }))}
       className={clsx(wrapperClassName, {
         [wrapperBorderClassName]: layoutStyles.border,
         [wrapperStripeClassName]: layoutStyles.stripe,
@@ -123,10 +127,6 @@ export const TableWrapper = (props: TableWrapperProps) => {
         [wrapperHighlightRowClassName]: layoutStyles.highlightRow,
         [wrapperHighlightColumnClassName]: layoutStyles.highlightColumn,
       })}
-      role="group"
-      {...(tableCaption && ({
-        'aria-labelledby': tableCaption
-      }))}
       {...getProps()}
     >
       {children}
@@ -139,16 +139,17 @@ export const TableWrapper = (props: TableWrapperProps) => {
  */
 export interface TableRootProps extends HTMLAttributes<HTMLTableElement> {
   children: ReactNode;
+  rowCount?: number;
 }
 
 export const TableRoot = (props: TableRootProps) => {
-  const { className, children, ...rest } = props;
+  const { id, className, children, rowCount, ...rest } = props;
 
   const getProps = useCallback(() => rest, [rest])
 
   return (
     <table
-      role="table"
+      aria-rowcount={rowCount}
       className={clsx(tableClassName)}
       {...getProps()}
     >
@@ -203,17 +204,26 @@ export interface TableColumnProps extends HTMLAttributes<HTMLTableCellElement> {
   children: ReactNode;
   width: number;
   type: ChudoTableColumnType;
+  alignment: ChudoTableColumnAlignment;
 }
 
 export const TableColumn = (props: TableColumnProps) => {
-  const { className, children, width, type, ...rest } = props;
+  const { className, children, width, type, alignment, ...rest } = props;
 
   const getProps = useCallback(() => rest, [rest]);
 
   return (
-    <th role="columnheader" className={clsx(tableCellClassName, tableHeadColumnClassName)} data-type={type} style={{
-      width: widthToStyleValue(width)
-    }} {...getProps()}>
+    <th
+      role="columnheader"
+      data-type={type}
+      data-alignment={alignment}
+      aria-sort="ascending"
+      className={clsx(tableCellClassName, tableHeadColumnClassName)}
+      style={{
+        width: widthToStyleValue(width)
+      }}
+      {...getProps()}
+    >
       {children}
     </th>
   )
@@ -245,8 +255,8 @@ export const TableBody = (props: TableBodyProps) => {
 
 export interface TableRowProps extends HTMLAttributes<HTMLTableRowElement> {
   children: ReactNode;
-  rowId: string;
-  index: number;
+  rowId: RecordID;
+  rowIndex: number;
 }
 
 export const TableRow = (props: TableRowProps) => {
@@ -254,7 +264,7 @@ export const TableRow = (props: TableRowProps) => {
     className,
     children,
     rowId,
-    index,
+    rowIndex,
     ...rest
   } = props;
 
@@ -263,9 +273,9 @@ export const TableRow = (props: TableRowProps) => {
   return (
     <tr
       role="row"
-      className={clsx(tableRowClassName, tableBodyRowClassName)}
       data-row-id={rowId}
-      data-index={index}
+      data-index={rowIndex}
+      className={clsx(tableRowClassName, tableBodyRowClassName)}
       {...getProps()}
     >
       {children}
@@ -280,19 +290,23 @@ export const TableRow = (props: TableRowProps) => {
 export interface TableCellProps extends HTMLAttributes<HTMLTableCellElement> {
   children: ReactNode;
   rowId: RecordID;
+  rowIndex: number;
   type: ChudoTableColumnType;
+  alignment: ChudoTableColumnAlignment;
 }
 
 export const TableCell = (props: TableCellProps) => {
-  const { children, type, rowId, ...rest } = props;
+  const { children, rowId, rowIndex, type, alignment, ...rest } = props;
 
   const getProps = useCallback(() => rest, [rest])
 
   return (
     <td
       role="cell"
-      data-type={type}
       data-row-id={rowId}
+      aria-rowindex={rowIndex}
+      data-type={type}
+      data-alignment={alignment}
       className={clsx(tableCellClassName, tableBodyCellClassName)}
       {...getProps()}
     >

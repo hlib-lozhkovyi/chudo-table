@@ -20,12 +20,11 @@ import {
   AccessorKey,
   ChudoTableColumnMetaConfig
 } from "types";
-import { generateRowId, isAllRowsSelected } from 'utils';
+import { generateRowId, getRowIndex, isAllRowsSelected } from 'utils';
 
 /**
  * 
  */
-
 export interface UseIndeterminateCheckboxState {
   checked: boolean;
   indeterminate: boolean;
@@ -127,19 +126,11 @@ export function useChudoTable<Record = any, RemoteData = Record[]>(
   }, [idAccessor])
 
   const createTableRowsFromData = useCallback((data: Record[]) => {
-    return data.map((_row, index) => {
-      const data = {
-        ..._row,
-        _id: getRowId(_row) ?? generateRowId(tableId, state.currentPage, index),
-      }
-
-      return ({
-        ...data,
-        getCellValue: function (key) {
-          return get(data, [key])
-        }
-      }) as ChudoTableRow<Record>
-    })
+    return data.map((row, index) => ({
+      id: getRowId(row) ?? generateRowId(tableId, state.currentPage, index),
+      index: getRowIndex(state.currentPage, index),
+      _raw: row,
+    }))
   }, [tableId, state.currentPage, getRowId])
 
   const initializeColumns = useCallback((columns: ChudoTableColumn<Record>[]) => {
@@ -300,7 +291,7 @@ export interface UseColumnsHook<Record, RemoteData> {
   initializeColumns: ChudoTableHelpers<Record, RemoteData>["initializeColumns"]
 }
 
-export function useColumns<Record, RemoteData>(): UseColumnsHook<Record, RemoteData> {
+export function useColumns<Record, RemoteData = Record[]>(): UseColumnsHook<Record, RemoteData> {
   const { initializeColumns } = useChudoTableContext<Record, RemoteData>();
 
   return { initializeColumns }
@@ -353,14 +344,16 @@ export function useResponse<Record = any, RemoteData = Record[]>(): UseResponseH
  * 
  */
 export interface UseTableHook<Record, RemoteData> {
+  totalCount: ChudoTableState<Record, RemoteData>['totalCount'];
   rows: ChudoTableState<Record, RemoteData>['rows'];
   columns: ChudoTableState<Record, RemoteData>['columns'];
 }
 
 export function useTable<Record = any, RemoteData = Record[]>(): UseTableHook<Record, RemoteData> {
-  const { rows, columns, response } = useChudoTableContext<Record, RemoteData>();
+  const { rows, columns, totalCount } = useChudoTableContext<Record, RemoteData>();
 
   return {
+    totalCount,
     rows,
     columns
   }
@@ -369,30 +362,20 @@ export function useTable<Record = any, RemoteData = Record[]>(): UseTableHook<Re
 /**
  * 
  */
+export function useTableId<Record = any, RemoteData = Record[]>(): string | undefined {
+  const { id } = useChudoTableContext<Record, RemoteData>();
+
+  return id
+}
+/**
+ * 
+ */
 export interface UseSetRowsHook<Record, RemoteData> {
-  setRows: (data: Record[]) => void;
+  setRows: ChudoTableHelpers<Record, RemoteData>['setRows'];
 }
 
 export function useSetRows<Record = any, RemoteData = Record[]>(): UseSetRowsHook<Record, RemoteData> {
-  const { id: tableId, getRowId, setRows: setTableRaws, currentPage } = useChudoTableContext<Record, RemoteData>();
-
-  const setRows = useCallback((data: Record[]) => {
-    const rows: ChudoTableRow<Record>[] = data.map((_row, index) => {
-      const data = {
-        _id: getRowId(_row) ?? generateRowId(tableId, currentPage, index),
-        ..._row
-      }
-
-      return ({
-        ...data,
-        getCellValue: function (key) {
-          return get(data, [key])
-        }
-      })
-    })
-
-    setTableRaws(rows)
-  }, [getRowId, tableId, setTableRaws, currentPage])
+  const { setRows } = useChudoTableContext<Record, RemoteData>();
 
   return {
     setRows
@@ -600,4 +583,17 @@ export function useColumnResize<Record = any>(accessor: AccessorKey<Record>): Us
     stopResize,
     breakResize
   }
+}
+
+/**
+ * 
+ */
+export function useTableCaption(customTableId?: string): string | undefined {
+  const id = useTableId();
+
+  const tableId = useMemo(() => customTableId ?? id, [customTableId, id])
+
+  const caption = useMemo(() => tableId ? `${tableId}-caption` : undefined, [tableId]);
+
+  return caption;
 }

@@ -61,23 +61,13 @@ You see? No local state, long configuration object. As simple as it is.
 Nice. But what about pagination? No worries, here is a `<Pagination />` component.
 
 ```jsx
-<ChudoTable
-  id="users"
-  idAccessor="id"
-  rounded
-  border
-  stripe
-  rowBorder
-  compact
-  highlightRow
-  highlightColumn
->
+<ChudoTable id="users" idAccessor="id" rounded border stripe rowBorder compact highlightRow highlightColumn>
   <TableHeader caption="Users" />
   <Table>
     <Columns>
       <SelectColumn accessor="id" />
-      <Column<User> accessor="avatar" Header="Profile">
-        {({ avatar, first_name, email }) =>
+      <Column accessor="avatar" Header="Profile">
+        {({ avatar, first_name, email }) => (
           <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <img
               src={avatar}
@@ -85,7 +75,7 @@ Nice. But what about pagination? No worries, here is a `<Pagination />` componen
               width={32}
               height={32}
               style={{
-                borderRadius: '50%'
+                borderRadius: '50%',
               }}
             />
             <div style={{ display: 'flex', flexDirection: 'column', fontSize: '0.8rem' }}>
@@ -93,28 +83,27 @@ Nice. But what about pagination? No worries, here is a `<Pagination />` componen
               <span style={{ color: '#434343' }}>{email}</span>
             </div>
           </span>
-        }
+        )}
       </Column>
       <Column accessor="last_name" Header="Last Name" />
-      <ActionColumn<User>>
-        {({ id }) =>
+      <ActionColumn>
+        {({ id }) => (
           <>
-            <button className="btn" onClick={() => alert(`delete ${id}`)}>Delete</button>
-            <button className="btn" onClick={() => alert(`edit ${id}`)}>Edit</button>
+            <button className="btn" onClick={() => alert(`details ${id}`)}>
+              Details
+            </button>
           </>
-        }
+        )}
       </ActionColumn>
     </Columns>
   </Table>
-  <Pagination<User, UserResponse>
-    pageSize={6}
-  />
-  <DataSource<User, UserResponse>
+  <Pagination pageSize={6} />
+  <DataSource
     fetcher={fetcher}
     parse={(response) => ({
       data: response.data,
       totalPages: response.total_pages,
-      totalCount: response.total
+      totalCount: response.total,
     })}
   />
 </ChudoTable>

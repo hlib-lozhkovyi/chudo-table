@@ -32,14 +32,17 @@
   --ct-wrapper-table-row-cell-background: var(--ct-wrapper-table-row-background);
   --ct-wrapper-table-row-cell-x-padding: calc(var(--ct-padding) * 1.5);
   --ct-wrapper-table-row-cell-y-padding: calc(var(--ct-padding) * 1.5);
-  --ct-wrapper-table-row-cell-text-align: left;
   --ct-wrapper-table-row-cell-color: var(--ct-text-color);
+
+  --ct-wrapper-table-row-first-cell-left-padding: calc(var(--ct-padding) * 3);
+  --ct-wrapper-table-row-last-cell-right-padding: calc(var(--ct-padding) * 3);
+
+  --ct-wrapper-table-row-select-cell-left-padding: calc(var(--ct-padding) * 2 + 3px);
 
   --ct-wrapper-table-head-background: var(--ct-table-background);
   --ct-wrapper-table-head-border-color: var(--ct-border-color);
   --ct-wrapper-table-head-x-padding: calc(var(--ct-padding) * 1.5);
   --ct-wrapper-table-head-y-padding: calc(var(--ct-padding) * 1.5);
-
 
   --ct-wrapper-table-head-row-cell-color: var(--ct-header-caption-color);
   --ct-wrapper-table-head-row-cell-font-weight: 600;
@@ -146,14 +149,34 @@
           position: relative;
           background-color: var(--ct-wrapper-table-row-cell-background);
           padding: var(--ct-wrapper-table-row-cell-y-padding) var(--ct-wrapper-table-row-cell-x-padding);
-          text-align: var(--ct-wrapper-table-row-cell-text-align);
           color: var(--ct-wrapper-table-row-cell-color);
 
+          &:first-child {
+            padding-left: var(--ct-wrapper-table-row-first-cell-left-padding);
+          }
+
+          &:last-child {
+            padding-right: var(--ct-wrapper-table-row-last-cell-right-padding);
+          }
+
           &[data-type=select] {
+            padding-left: var(--ct-wrapper-table-row-select-cell-left-padding);
             padding-right: 0px;
             border-right: none;
-            width: 42px;
-            padding-left: 20px;
+            box-sizing: content-box !important;
+            width: 24px;
+          }
+
+          &[data-alignment=left] {
+            text-align: left;
+          }
+
+          &[data-alignment=center] {
+            text-align: center;
+          }
+
+          &[data-alignment=right] {
+            text-align: right;
           }
         }
       }
@@ -187,7 +210,6 @@
           &__cell {
             color: var(--ct-wrapper-table-body-row-cell-color);
             font-weight: var(--ct-wrapper-table-body-row-cell-font-weight);
-
 
             white-space: nowrap;
             overflow: hidden;

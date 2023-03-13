@@ -75,8 +75,8 @@ export const Test = () => {
               </span>
             }
           </Column>
-          <Column accessor="last_name" Header="Last Name" minWidth={110} />
-          <ActionColumn<User>>
+          <Column accessor="last_name" Header="Last Name" minWidth={110} sortable />
+          <ActionColumn<User> Header={"Actions"}>  
             {({ id }) =>
               <>
                 <button className="btn" onClick={() => alert(`delete ${id}`)}>Delete</button>

@@ -1,7 +1,8 @@
 import React, { ReactElement, ReactNode, Children } from 'react';
-import isFunction from 'lodash/isFunction'
+import isFunction from 'lodash/isFunction';
+import get from 'lodash/get';
 import { Column, SelectColumn, ActionColumn, CheckboxInput, IndeterminateCheckboxInput, ColumnProps } from 'components';
-import { ChudoTableColumn, ChudoTableColumnType } from 'types';
+import { AccessorKey, ChudoTableColumn, ChudoTableColumnAlignment, ChudoTableColumnType, ChudoTableRow } from 'types';
 import { CellWrapper, ColumnHeader } from 'elements';
 
 /**
@@ -40,6 +41,19 @@ export function getColumnResiableValueFromTheProps(props: ColumnProps) {
 /**
  * 
  */
+export function getColumnDefaultAlignment(type: ChudoTableColumnType | null): ChudoTableColumnAlignment {
+  switch (type) {
+    case 'action':
+      return 'right';
+
+    default:
+      return 'left';
+  }
+}
+
+/**
+ * 
+ */
 export function getColumnDefaultResizableValue(type: ChudoTableColumnType | null) {
   switch (type) {
     case 'select':
@@ -70,7 +84,7 @@ export function createColumnsFromChildren<Record = any>(children: React.ReactNod
     }
 
     // ColumnPropsInterface
-    const { accessor, Wrapper, width, minWidth, maxWidth } = element.props
+    const { accessor, Wrapper, width, minWidth, maxWidth, alignment } = element.props
     let { children, Header, resizable } = element.props;
 
     const type = getColumnType(element);
@@ -100,6 +114,7 @@ export function createColumnsFromChildren<Record = any>(children: React.ReactNod
       width,
       minWidth,
       maxWidth,
+      alignment: alignment ?? getColumnDefaultAlignment(type),
       Header: Header
         ? () => Header
         : () => <ColumnHeader name={accessor} />,
@@ -127,7 +142,20 @@ export function generateRowId(tableId: string | undefined, page: number, index: 
 /**
  * 
  */
+export function getRowIndex(page: number, index: number) {
+  return page * index;
+}
 
+/**
+ * 
+ */
+export function getCellValue<Record, Key extends AccessorKey<Record> = AccessorKey<Record>>(row: ChudoTableRow<Record>, accessor: Key): Record[Key] {
+  return get(row, ['_raw', accessor]);
+}
+
+/**
+ * 
+ */
 export function isAllRowsSelected(rowsCount: number, pageSize: number) {
   return rowsCount === pageSize
 }

@@ -25,7 +25,7 @@ import {
   TableColumnResizer,
   TableColumnResizerProps,
 } from 'elements'
-import { createColumnsFromChildren } from 'utils';
+import { createColumnsFromChildren, getCellValue } from 'utils';
 import { AccessorKey, ChudoTablePaginationState, DataFetcherParserResult, DataFetcherProps, TableStyleContextType } from 'types';
 import { headerCaptionClassName, headerClassName, paginationBorderClassName, paginationCaptionClassName, paginationCaptionNumberClassName, paginationClassName, paginationMetaClassName, paginationNavigationClassName, paginationNavigationItemClassName, paginationNavigationPageActiveClassName, paginationNavigationPageClassName, selectionPanelClassName, tableHeadColumnResizerClassName } from 'config';
 
@@ -58,18 +58,27 @@ export function Table<Record = any>(props: TableProps<Record>) {
     Cell = TableCell,
   } = props;
 
-  const { columns, rows } = useTable<Record>();
+  const { columns, rows, totalCount } = useTable<Record>();
   const { id } = useTableMeta();
 
   return (
     <Wrapper tableId={id}>
-      <Root id={id}>
+      <Root id={id} rowCount={totalCount}>
         {/* todo hide columns / set height 0 if headless */}
         <Head>
           <HeadRow>
             {columns.map((column) => (
-              <Column key={column.accessor} type={column.type} width={column.width ?? column.minWidth}>
+              <Column
+                key={column.accessor}
+                type={column.type}
+                alignment={column.alignment}
+                width={column.width ?? column.minWidth}
+              >
                 <column.Header />
+
+                {column.sortable && (
+                  <SortButton />
+                )}
 
                 {(column.resizable) && (
                   <ColumnResizer accessor={column.accessor}>
@@ -81,17 +90,17 @@ export function Table<Record = any>(props: TableProps<Record>) {
           </HeadRow>
         </Head>
         <Body>
-          {rows.map((row, index) => (
-            <Row key={row._id} rowId={row._id} index={index}>
+          {rows.map((row) => (
+            <Row key={row.id} rowId={row.id} rowIndex={row.index}>
               {columns.map((column) => {
-                const value = row.getCellValue(column.accessor);
+                const value = getCellValue(row, column.accessor);
 
                 return (
-                  <Cell type={column.type} rowId={row._id}>
+                  <Cell type={column.type} rowId={row.id} rowIndex={row.index} alignment={column.alignment}>
                     <column.Wrapper>
                       <column.Cell
                         value={value}
-                        {...row}
+                        {...row._raw}
                       />
                     </column.Wrapper>
                   </Cell>
@@ -132,7 +141,7 @@ export function TableHeader(props: TableHeaderProps) {
  * Columns
  */
 export interface ColumnsProps<Record> {
-  children: ReactNode
+  children: ReactNode;
 }
 
 export function Columns<Record = any,>(props: ColumnsProps<Record>) {
@@ -140,7 +149,7 @@ export function Columns<Record = any,>(props: ColumnsProps<Record>) {
     children,
   } = props;
 
-  const { initializeColumns } = useColumns();
+  const { initializeColumns } = useColumns<Record>();
   const columns = createColumnsFromChildren<Record>(children);
 
   useEffect(() => {
@@ -156,6 +165,7 @@ export interface ColumnMetaDefinition {
   maxWidth?: number | string;
   fixed?: boolean;
   resizable?: boolean;
+  sortable?: boolean;
 }
 
 /**
@@ -306,11 +316,14 @@ export function SelectedPanel(props: SelectedPanelProps) {
   const isHidden = useMemo(() => !isSomeSelected, [isSomeSelected])
 
   return (
-    <div className={selectionPanelClassName} style={{
-      ...(isHidden && {
-        visibility: 'hidden'
-      })
-    }}>
+    <div
+      className={selectionPanelClassName}
+      style={{
+        ...(isHidden && {
+          visibility: 'hidden'
+        })
+      }}
+    >
       <span className="css-1wwxqgk">{selectedCount} selected</span>
     </div >
   )
@@ -513,7 +526,7 @@ export function IndeterminateCheckboxInput() {
  */
 
 export function CheckboxInput(props) {
-  const { _id: id } = props;
+  const { id } = props;
   const { isRowSelected, toggleRowSelection } = useRowSelection();
 
   const checked = useMemo(() => isRowSelected(id), [id, isRowSelected])
@@ -528,4 +541,12 @@ export function CheckboxInput(props) {
       onChange={handleChange}
     />
   )
+}
+
+/**
+ * 
+ */
+
+export function SortButton() {
+  return null;
 }
