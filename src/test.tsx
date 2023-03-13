@@ -39,7 +39,7 @@ export const Test = () => {
     <ChudoTable
       id="users"
       idAccessor="id"
-      // rounded
+      rounded
       border
       stripe
       rowBorder
@@ -71,14 +71,14 @@ export const Test = () => {
             }
           </Column>
           <Column accessor="last_name" Header="Last Name" />
-          <ActionColumn<User>>
+          {/* <ActionColumn<User>>
             {({ id }) =>
               <>
                 <button className="btn" onClick={() => alert(`delete ${id}`)}>Delete</button>
                 <button className="btn" onClick={() => alert(`edit ${id}`)}>Edit</button>
               </>
             }
-          </ActionColumn>
+          </ActionColumn> */}
         </Columns>
       </Table>
       <Pagination<User, UserResponse>

@@ -1,10 +1,16 @@
 # 🪄 ChudoTable
 
-🧩 Declarative and extensible react Table library
+<p align="center">
+  <img width="824" height="557" alt="Screenshot 2023-03-13 at 12 34 56" src="https://user-images.githubusercontent.com/20016615/224678419-95919460-073e-4250-9df6-4222e63e81f4.png" />
+</p>
+
+<h3 align="center">
+  Declarative React Table library
+</h3>
+
+<br>
 
 This is POC project. I'll be happy to hear any feedback or your experience. Thanks! ✨
-
-Full TypeScript support. Why not?
 
 ### Motivation
 
@@ -50,95 +56,67 @@ const fetcher = () => {
 
 You see? No local state, long configuration object. As simple as it is.
 
-### Custom Cell rendering
-
-What if I want to have custom renderer? Like show the avatar. Here is an example:
-
-```jsx
-<ChudoTable>
-  <Table>
-    <Columns>
-      <Column accessor="id" />
-      <Column accessor="avatar">
-        {({ avatar, fulName }) => (
-          <img
-            src={avatar}
-            alt={fulName}
-            width={32}
-            height={32}
-            style={{
-              borderRadius: '50%',
-            }}
-          />
-        )}
-      </Column>
-      <Column accessor="email" />
-      <Column accessor="fulName" />
-    </Columns>
-  </Table>
-  <DataSource fetcher={fetcher} />
-</ChudoTable>
-```
-
-### Custom Table Header caption?
-
-Yes, still supported.
-
-```jsx
-<ChudoTable>
-  <Table>
-    <Columns>
-      <Column accessor="id" Header={null} />
-      <Column accessor="email" Header="Email" />
-      <Column accessor="firstName" Header="Name" />
-    </Columns>
-  </Table>
-  <DataSource fetcher={fetcher} />
-</ChudoTable>
-```
-
-### Response formatting
-
-It looks nice? Still, my response looking something different, than just an array.
-No worries! You wanna transform the data? Here is `<DataTransformer />`
-
-```jsx
-<ChudoTable>
-  <Table>
-    <Columns>
-      <Column accessor="id" />
-      <Column accessor="email" />
-      <Column accessor="firstName" />
-    </Columns>
-  </Table>
-  <DataSource fetcher={fetcher} />
-  <DataTransformer
-    getRaws={(response) => response.data}
-    // or even simplier
-    // getRaws="data"
-  />
-</ChudoTable>
-```
-
-### Pagination
+### Advanced Example
 
 Nice. But what about pagination? No worries, here is a `<Pagination />` component.
 
 ```jsx
-<ChudoTable>
+<ChudoTable
+  id="users"
+  idAccessor="id"
+  rounded
+  border
+  stripe
+  rowBorder
+  compact
+  highlightRow
+  highlightColumn
+>
+  <TableHeader caption="Users" />
   <Table>
     <Columns>
-      <Column accessor="id" />
-      <Column accessor="email" />
-      <Column accessor="firstName" />
+      <SelectColumn accessor="id" />
+      <Column<User> accessor="avatar" Header="Profile">
+        {({ avatar, first_name, email }) =>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <img
+              src={avatar}
+              alt={first_name}
+              width={32}
+              height={32}
+              style={{
+                borderRadius: '50%'
+              }}
+            />
+            <div style={{ display: 'flex', flexDirection: 'column', fontSize: '0.8rem' }}>
+              <span>{first_name}</span>
+              <span style={{ color: '#434343' }}>{email}</span>
+            </div>
+          </span>
+        }
+      </Column>
+      <Column accessor="last_name" Header="Last Name" />
+      <ActionColumn<User>>
+        {({ id }) =>
+          <>
+            <button className="btn" onClick={() => alert(`delete ${id}`)}>Delete</button>
+            <button className="btn" onClick={() => alert(`edit ${id}`)}>Edit</button>
+          </>
+        }
+      </ActionColumn>
     </Columns>
   </Table>
-  <Pagination
-    pageSize={10}
-    getTotalCount={(response) => response.total}
-    getTotalPages={(response) => response.total_pages}
+  <Pagination<User, UserResponse>
+    pageSize={6}
   />
-  <DataSource fetcher={fetcher} />
+  <DataSource<User, UserResponse>
+    fetcher={fetcher}
+    parse={(response) => ({
+      data: response.data,
+      totalPages: response.total_pages,
+      totalCount: response.total
+    })}
+  />
 </ChudoTable>
 ```
 

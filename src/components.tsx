@@ -287,7 +287,6 @@ export interface SelectedPanelProps {
 export function SelectedPanel(props: SelectedPanelProps) {
   const { isSomeSelected, selectedCount, isAllSelected, selectedIds } = useRowSelection();
 
-
   const isHidden = useMemo(() => !isSomeSelected, [isSomeSelected])
 
   return (
@@ -299,10 +298,6 @@ export function SelectedPanel(props: SelectedPanelProps) {
       <span className="css-1wwxqgk">{selectedCount} selected</span>
     </div >
   )
-
-  return <div>
-    <code>{JSON.stringify({ isSomeSelected, isAllSelected, selectedIds })}</code>
-  </div>
 }
 
 /**
