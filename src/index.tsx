@@ -11,10 +11,10 @@ export {
   Column,
   ActionColumn,
   Pagination,
-} from 'components'
+} from 'components';
 
 export type {
-  DataFetcherPropsInterface
-} from 'types'
+  DataFetcherProps
+} from 'types';
 
 export default ChudoTable;

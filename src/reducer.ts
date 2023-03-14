@@ -1,5 +1,5 @@
 import { ChudoTableAction, ChudoTableState } from 'types';
-import { isAllRowsSelected } from 'utils';
+import { getNextColumnSortValue } from 'utils';
 import xor from 'lodash/xor';
 
 export const chudoTableReducer = <Record, RemoteData>(
@@ -55,6 +55,14 @@ export const chudoTableReducer = <Record, RemoteData>(
       return { ...state, pageSize: action.payload.pageSize };
     case 'SET_TOTAL_COUNT':
       return { ...state, totalCount: action.payload.totalCount };
+    case 'TOGGLE_COLUMN_SORT':
+      return {
+        ...state,
+        sorting: {
+          ...state.sorting,
+          [action.payload.accessor]: getNextColumnSortValue(state.sorting[action.payload.accessor]),
+        },
+      };
     case 'TOGGLE_ALL_ROWS_SELECTION':
       return {
         ...state,

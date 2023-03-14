@@ -1,8 +1,8 @@
-import { FunctionComponent, ElementType } from 'react';
+import { FunctionComponent, ElementType, ReactNode } from 'react';
 
-export type AccessorKey<Record = any> = Extract<keyof Record, string>;
+export type AccessorKey<Entity = any> = Extract<keyof Entity, string>;
 
-export type RecordID = string;
+export type EntityID = string;
 
 export type ChudoTableColumnType = 'common' | 'select' | 'action';
 
@@ -17,22 +17,23 @@ export interface ChudoTableColumnMetaConfig {
   alignment: ChudoTableColumnAlignment;
 }
 
-export interface ChudoTableColumnConfig<Record, Key = AccessorKey<Record>> extends ChudoTableColumnMetaConfig {
+export interface ChudoTableColumnConfig<Entity, Key = AccessorKey<Entity>> extends ChudoTableColumnMetaConfig {
   type: ChudoTableColumnType;
   accessor: Key;
 }
 
-export interface ChudoTableColumn<Record, Key extends AccessorKey<Record> = AccessorKey<Record>>
-  extends ChudoTableColumnConfig<Record> {
+export interface ChudoTableColumn<Entity, Key extends AccessorKey<Entity> = AccessorKey<Entity>>
+  extends ChudoTableColumnConfig<Entity> {
   Header: FunctionComponent<{}>;
+  HeaderWrapper: ElementType<{ accessor?: Key; children: ReactNode }>;
   Wrapper: ElementType;
-  Cell: FunctionComponent<{ value: Record[Key] } & Record>;
+  Cell: FunctionComponent<{ value: Entity[Key] } & Entity>;
 }
 
-export type ChudoTableRow<Record> = {
-  id: RecordID;
+export type ChudoTableRow<Entity> = {
+  id: EntityID;
   index: number;
-  _raw: Record;
+  _raw: Entity;
 };
 
 export interface ChudoTablePaginationState {
@@ -42,34 +43,45 @@ export interface ChudoTablePaginationState {
   totalCount: number;
 }
 
-export interface ChudoTableState<Record, RemoteData> extends ChudoTablePaginationState {
+export type ChudoTableColumnSortDirection = 'ascending' | 'desceding';
+
+export type ChudotTableSortState<Entity, Key extends AccessorKey<Entity> = AccessorKey<Entity>> = Record<
+  Key,
+  ChudoTableColumnSortDirection
+>;
+
+export interface ChudoTableState<Entity, RemoteData> extends ChudoTablePaginationState {
   isLoading: boolean;
   error: Error | null;
   response: RemoteData | null;
-  columns: ChudoTableColumn<Record>[];
-  rows: ChudoTableRow<Record>[];
-  selectedIds: RecordID[];
+  columns: ChudoTableColumn<Entity>[];
+  rows: ChudoTableRow<Entity>[];
+  selectedIds: EntityID[];
+  sorting: ChudotTableSortState<Entity>;
 }
 
-export interface DataFetcherProps {
+export interface DataFetcherProps<Entity> {
   page: ChudoTablePaginationState['currentPage'];
-  pageSize?: ChudoTablePaginationState['pageSize'];
+  pageSize: ChudoTablePaginationState['pageSize'];
+  limit: number;
+  offset: number;
+  sorting: ChudotTableSortState<Entity>;
 }
 
-export interface DataFetcherParserResult<Record> {
-  data: Record[];
+export interface DataFetcherParserResult<Entity> {
+  data: Entity[];
   totalPages?: ChudoTablePaginationState['totalPages'];
   totalCount?: ChudoTablePaginationState['totalCount'];
 }
 
-export type ChudoTableAction<Record, RemoteData> =
-  | { type: 'INITIALIZE_COLUMNS'; payload: { columns: ChudoTableColumn<Record>[] } }
-  | { type: 'UPDATE_COLUMN'; payload: { accessor: AccessorKey<Record>; meta: ChudoTableColumnMetaConfig } }
-  | { type: 'SET_ROWS'; payload: { rows: ChudoTableRow<Record>[] } }
+export type ChudoTableAction<Entity, RemoteData> =
+  | { type: 'INITIALIZE_COLUMNS'; payload: { columns: ChudoTableColumn<Entity>[] } }
+  | { type: 'UPDATE_COLUMN'; payload: { accessor: AccessorKey<Entity>; meta: Partial<ChudoTableColumnMetaConfig> } }
+  | { type: 'SET_ROWS'; payload: { rows: ChudoTableRow<Entity>[] } }
   | {
       type: 'SET_REMOTE_DATA';
-      payload: Omit<DataFetcherParserResult<Record>, 'data'> & {
-        rows: ChudoTableRow<Record>[];
+      payload: Omit<DataFetcherParserResult<Entity>, 'data'> & {
+        rows: ChudoTableRow<Entity>[];
       };
     }
   | { type: 'SET_RESPONSE'; payload: { response: RemoteData } }
@@ -79,6 +91,7 @@ export type ChudoTableAction<Record, RemoteData> =
   | { type: 'SET_TOTAL_PAGES'; payload: { totalPages: ChudoTablePaginationState['totalPages'] } }
   | { type: 'SET_PAGE_SIZE'; payload: { pageSize: ChudoTablePaginationState['pageSize'] } }
   | { type: 'SET_TOTAL_COUNT'; payload: { totalCount: ChudoTablePaginationState['totalCount'] } }
+  | { type: 'TOGGLE_COLUMN_SORT'; payload: { accessor: AccessorKey<Entity> } }
   | { type: 'TOGGLE_ALL_ROWS_SELECTION' }
   | { type: 'TOGGLE_ROW_SELECTION'; payload: { id: string } };
 
@@ -89,30 +102,31 @@ export interface ChudoTablePaginationHelpers {
   setTotalCount: (totalCount: number) => void;
 }
 
-export interface ChudoTableHelpers<Record, RemoteData> extends ChudoTablePaginationHelpers {
-  initializeColumns: (columns: ChudoTableState<Record, RemoteData>['columns']) => void;
-  updateColumn: (accessor: AccessorKey<Record>, meta: Partial<ChudoTableColumnMetaConfig>) => void;
-  getRowId: (data: Record) => RecordID;
-  setIsLoading: (isLoading: ChudoTableState<Record, RemoteData>['isLoading']) => void;
-  setError: (error: ChudoTableState<Record, RemoteData>['error']) => void;
-  setRows: (rows: Record[]) => void;
-  setRemoteData: (daata: DataFetcherParserResult<Record>) => void;
+export interface ChudoTableHelpers<Entity, RemoteData> extends ChudoTablePaginationHelpers {
+  initializeColumns: (columns: ChudoTableState<Entity, RemoteData>['columns']) => void;
+  updateColumn: (accessor: AccessorKey<Entity>, meta: Partial<ChudoTableColumnMetaConfig>) => void;
+  getRowId: (data: Entity) => EntityID;
+  setIsLoading: (isLoading: ChudoTableState<Entity, RemoteData>['isLoading']) => void;
+  setError: (error: ChudoTableState<Entity, RemoteData>['error']) => void;
+  setRows: (rows: Entity[]) => void;
+  setRemoteData: (data: DataFetcherParserResult<Entity>) => void;
+  toggleColumnSort: (accessor: AccessorKey<Entity>) => void;
   toggleAllRowsSelection: () => void;
-  toggleRowSelection: (id: RecordID) => void;
+  toggleRowSelection: (id: EntityID) => void;
 }
 
 export interface ChudoTableMetaConfig {
   id?: string;
 }
 
-export interface ChudoTableConfig<Record, Key extends AccessorKey<Record> = AccessorKey<Record>>
+export interface ChudoTableConfig<Entity, Key extends AccessorKey<Entity> = AccessorKey<Entity>>
   extends ChudoTableMetaConfig {
-  idAccessor?: ((data: Record) => RecordID) | RecordID;
+  idAccessor?: ((data: Entity) => EntityID) | EntityID;
 }
 
-export type ChudoTableContextType<Record, RemoteData> = ChudoTableState<Record, RemoteData> &
-  ChudoTableHelpers<Record, RemoteData> &
-  ChudoTableConfig<Record>;
+export type ChudoTableContextType<Entity, RemoteData> = ChudoTableState<Entity, RemoteData> &
+  ChudoTableHelpers<Entity, RemoteData> &
+  ChudoTableConfig<Entity>;
 
 export interface TableStyleContextType {
   border?: boolean;

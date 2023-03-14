@@ -1,5 +1,6 @@
-import React, { ChangeEvent, HTMLAttributes, InputHTMLAttributes, ReactNode, useCallback, useMemo, useState } from "react";
+import React, { ChangeEvent, Children, HTMLAttributes, InputHTMLAttributes, ReactNode, useCallback, useMemo, useState } from "react";
 import clsx from 'classnames';
+import isNil from 'lodash/isNil';
 import {
   containerClassName,
   wrapperClassName,
@@ -25,8 +26,11 @@ import {
   columnResizerClassName,
   columnResizerFullClassName,
   columnResizerLineClassName,
+  tableHeadColumnActionWrapperClassName,
+  tableHeadColumnSimpleWrapperClassName,
+  tableHeadColumnWrapperClassName,
 } from 'config'
-import { ChudoTableColumnAlignment, ChudoTableColumnType, RecordID, TableStyleContextType } from "types";
+import { ChudoTableColumnAlignment, ChudoTableColumnSortDirection, ChudoTableColumnType, RecordID, TableStyleContextType } from "types";
 import { useIndeterminateCheckbox, useTableCaption, useTableLayoutContext } from "hooks";
 import { widthToStyleValue } from "utils";
 
@@ -205,10 +209,11 @@ export interface TableColumnProps extends HTMLAttributes<HTMLTableCellElement> {
   width: number;
   type: ChudoTableColumnType;
   alignment: ChudoTableColumnAlignment;
+  sortable: boolean | undefined;
 }
 
 export const TableColumn = (props: TableColumnProps) => {
-  const { className, children, width, type, alignment, ...rest } = props;
+  const { className, children, width, type, alignment, sortable, ...rest } = props;
 
   const getProps = useCallback(() => rest, [rest]);
 
@@ -217,6 +222,7 @@ export const TableColumn = (props: TableColumnProps) => {
       role="columnheader"
       data-type={type}
       data-alignment={alignment}
+      data-sortable={sortable}
       aria-sort="ascending"
       className={clsx(tableCellClassName, tableHeadColumnClassName)}
       style={{
@@ -228,6 +234,7 @@ export const TableColumn = (props: TableColumnProps) => {
     </th>
   )
 }
+
 
 /**
  * Body
@@ -320,12 +327,12 @@ export const TableCell = (props: TableCellProps) => {
  */
 export interface ColumnHeaderProps {
   name: ReactNode;
+  sortable?: boolean;
 }
 
 export function ColumnHeader(props: ColumnHeaderProps) {
   const { name } = props;
 
-  return <>{name}</>
   return <>{name}<SortArrow sortDir={"ascending"} /></>
 }
 
@@ -398,7 +405,7 @@ export function CellWrapper(props: CellWrapperProps) {
  */
 
 export interface SortArrowProps {
-  sortDir: 'ascending' | 'desceding';
+  sortDir?: ChudoTableColumnSortDirection;
   isCurrent?: boolean;
 }
 
@@ -406,15 +413,13 @@ export function SortArrow(props: SortArrowProps) {
   const { sortDir, isCurrent } = props;
   const ascending = sortDir === 'ascending';
 
+  const showTopArrow = isCurrent && !isNil(ascending) ? ascending : true;
+  const showBottomArrow = isCurrent && !isNil(ascending) ? !ascending : true;
+
   return (
-    <svg viewBox="0 0 100 200" width="100" height="200">
-      {!(!ascending && isCurrent) &&
-        <polyline points="20 50, 50 20, 80 50"></polyline>
-      }
-      <line x1="50" y1="20" x2="50" y2="180"></line>
-      {!(ascending && isCurrent) &&
-        <polyline points="20 150, 50 180, 80 150"></polyline>
-      }
+    <svg viewBox="0 0 60 70">
+      <polyline points="0 30 30 0 60 30" data-active={showTopArrow}></polyline>
+      <polyline points="0 40 30 70 60 40" data-active={showBottomArrow}></polyline>
     </svg>
   );
 }

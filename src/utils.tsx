@@ -1,9 +1,12 @@
 import React, { ReactElement, ReactNode, Children } from 'react';
 import isFunction from 'lodash/isFunction';
 import get from 'lodash/get';
-import { Column, SelectColumn, ActionColumn, CheckboxInput, IndeterminateCheckboxInput, ColumnProps } from 'components';
-import { AccessorKey, ChudoTableColumn, ChudoTableColumnAlignment, ChudoTableColumnType, ChudoTableRow } from 'types';
-import { CellWrapper, ColumnHeader } from 'elements';
+import {
+  Column, SelectColumn, ActionColumn, CheckboxInput, IndeterminateCheckboxInput, ColumnProps, TableColumnActionWrapper,
+  TableColumnSimpleWrapper
+} from 'components';
+import { AccessorKey, ChudoTableColumn, ChudoTableColumnAlignment, ChudoTableColumnSortDirection, ChudoTableColumnType, ChudoTableRow } from 'types';
+import { CellWrapper, ColumnHeader, } from 'elements';
 
 /**
  *
@@ -84,8 +87,8 @@ export function createColumnsFromChildren<Record = any>(children: React.ReactNod
     }
 
     // ColumnPropsInterface
-    const { accessor, Wrapper, width, minWidth, maxWidth, alignment } = element.props
-    let { children, Header, resizable } = element.props;
+    const { accessor, Wrapper, width, minWidth, maxWidth, alignment, sortable } = element.props
+    let { children, Header, HeaderWrapper, resizable } = element.props;
 
     const type = getColumnType(element);
 
@@ -101,15 +104,26 @@ export function createColumnsFromChildren<Record = any>(children: React.ReactNod
       if (!Header) {
         Header = <IndeterminateCheckboxInput />;
       }
+
+      if (!HeaderWrapper) {
+        HeaderWrapper = TableColumnSimpleWrapper;
+      }
     }
 
     if (!resizable) {
       resizable = getColumnResiableValueFromTheProps(element.props)
     }
 
+    if (sortable) {
+      if (!HeaderWrapper) {
+        HeaderWrapper = TableColumnActionWrapper;
+      }
+    }
+
     const route: ChudoTableColumn<Record> = {
-      accessor,
       type,
+      accessor,
+      sortable,
       resizable,
       width,
       minWidth,
@@ -117,7 +131,8 @@ export function createColumnsFromChildren<Record = any>(children: React.ReactNod
       alignment: alignment ?? getColumnDefaultAlignment(type),
       Header: Header
         ? () => Header
-        : () => <ColumnHeader name={accessor} />,
+        : () => <ColumnHeader name={accessor} sortable={sortable} />,
+      HeaderWrapper: HeaderWrapper ?? TableColumnSimpleWrapper,
       Wrapper: Wrapper ?? CellWrapper,
       Cell: isFunction(children)
         ? (props) => children(props)
@@ -165,4 +180,19 @@ export function isAllRowsSelected(rowsCount: number, pageSize: number) {
  */
 export function widthToStyleValue(width: number): string {
   return `${width}px`
+}
+
+/**
+ * 
+ */
+export function getNextColumnSortValue(sort: ChudoTableColumnSortDirection | undefined): ChudoTableColumnSortDirection | undefined {
+  if (sort === undefined) {
+    return 'ascending';
+  }
+
+  if (sort === 'ascending') {
+    return 'desceding'
+  }
+
+  return undefined;
 }

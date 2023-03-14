@@ -25,6 +25,10 @@ export const tableHeadClassName = tableClassName + '__head';
 export const tableHeadRowClassName = tableHeadClassName + '__row';
 export const tableHeadColumnClassName = tableHeadRowClassName + '__cell';
 
+export const tableHeadColumnWrapperClassName = tableHeadColumnClassName + '__wrapper';
+export const tableHeadColumnSimpleWrapperClassName = tableHeadColumnWrapperClassName + '--simple';
+export const tableHeadColumnActionWrapperClassName = tableHeadColumnWrapperClassName + '--action';
+
 export const tableHeadColumnResizerClassName = tableHeadRowClassName + '__resizer';
 
 export const tableBodyClassName = tableClassName + '__body';
@@ -51,3 +55,5 @@ export const columnResizerClassName = containerClassName + '__resizer';
 export const columnResizerFullClassName = columnResizerClassName + '--full';
 
 export const columnResizerLineClassName = columnResizerClassName + '__line';
+
+export const columnSorterClassName = containerClassName + '__sorter';

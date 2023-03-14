@@ -59,8 +59,13 @@
   --ct-wrapper-table-body-row-cell-color: var(--ct-text-color);
   --ct-wrapper-table-body-row-cell-font-weight: 400;
 
-  --ct-resizer-bg-color: var(--ct-tertiary-color);
+  --ct-resizer-bg-color: var(--ct-border-color);
   --ct-resizer-width: 2px;
+
+  --ct-sorter-color: var(--ct-text-secondary-color);
+  --ct-sorter-active-color: var(--ct-text-color);
+  --ct-sorter-icon-arrow-active-opacity: 1;
+  --ct-sorter-icon-arrow-disabled-opacity: 0.3;
 
   --ct-resizer-active-bg-color: var(--ct-primary-color);
 
@@ -189,9 +194,53 @@
             color: var(--ct-wrapper-table-head-row-cell-color);
             font-weight: var(--ct-wrapper-table-head-row-cell-font-weight);
 
+            padding-top: 8px !important;
+            padding-bottom: 8px !important;
+
             &:hover {
               #{$chudo}__resizer {
-                opacity: 1;
+                // opacity: 1;
+
+              }
+            }
+
+            &__wrapper {
+              &--action {
+                cursor: default;
+                margin: 0em;
+                padding: 1px 6px;
+                border-width: 2px;
+                border-style: outset;
+                border-color: buttonborder;
+                border-image: initial;
+
+                appearance: auto;
+                border: 0px;
+                background-color: transparent;
+                // padding: 4px 6px;
+                // margin: 0px -4px;
+                border-radius: 4px;
+
+                display: inline-block;
+                text-align: center;
+                align-items: flex-start;
+
+
+                margin: 0px -2px !important;
+                padding-inline: 4px !important;
+                padding-top: 4px;
+                padding-bottom: 4px;
+
+                cursor: pointer;
+                transition: background-color 0.3s linear 0s;
+
+                &:hover {
+                  background-color: #ebedef;
+
+                  .chudo__sorter {
+                    color: var(--ct-text-secondary-color);
+                  }
+                }
               }
             }
           }
@@ -310,16 +359,49 @@
 
     cursor: col-resize;
     z-index: 100;
-    opacity: 0;
+    // opacity: 0;
     transition: opacity 0.3s linear 0s;
 
     &__line {
       position: absolute;
       background: var(--ct-resizer-bg-color);
-      width: var(--ct-resizer-width);
+      width: 1px;
       height: 100%;
       top: 0px;
       transition: all 100ms linear 0s;
+    }
+  }
+
+  &__sorter {
+    width: 20px;
+    height: 20px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+
+    margin: 0em;
+    padding: 1px 6px;
+
+    color: var(--ct-sorter-color);
+
+    --active-arrow-opacity: 1;
+    --disabled-arrow-opacity: 0.5;
+
+    >svg {
+      stroke: none;
+      // stroke-linecap: round;
+      // stroke-linejoin: round;
+
+      fill: currentColor;
+      width: 0.5rem;
+
+      >* {
+        opacity: var(--ct-sorter-icon-arrow-active-opacity);
+
+        &[data-active=true] {
+          opacity: var(--ct-sorter-icon-arrow-disabled-opacity);
+        }
+      }
     }
   }
 

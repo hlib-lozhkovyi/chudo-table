@@ -1,9 +1,9 @@
-import React, { ElementType, HTMLAttributes, ReactNode, useEffect, useCallback, useMemo, MouseEvent } from 'react';
+import React, { ElementType, HTMLAttributes, ReactNode, useEffect, useCallback, useMemo, MouseEvent, ComponentType, Provider } from 'react';
 import clsx from 'classnames';
 import isFunction from 'lodash/isFunction';
 import get from 'lodash/get';
 
-import { useColumnResize, useColumns, useFetchData, usePagination, useResponse, useRowSelection, useSetRows, useTable, useTableLayoutContext, useTableMeta } from 'hooks';
+import { useChudoTableColumnContext, useColumnResize, useColumnSort, useColumns, useFetchData, usePagination, useResponse, useRowSelection, useSetRows, useSorting, useTable, useTableLayoutContext, useTableMeta } from 'hooks';
 import {
   TableWrapperProps,
   TableWrapper,
@@ -24,10 +24,13 @@ import {
   IndeterminateCheckbox,
   TableColumnResizer,
   TableColumnResizerProps,
+  SortArrow,
+  SortArrowProps,
 } from 'elements'
 import { createColumnsFromChildren, getCellValue } from 'utils';
-import { AccessorKey, ChudoTablePaginationState, DataFetcherParserResult, DataFetcherProps, TableStyleContextType } from 'types';
-import { headerCaptionClassName, headerClassName, paginationBorderClassName, paginationCaptionClassName, paginationCaptionNumberClassName, paginationClassName, paginationMetaClassName, paginationNavigationClassName, paginationNavigationItemClassName, paginationNavigationPageActiveClassName, paginationNavigationPageClassName, selectionPanelClassName, tableHeadColumnResizerClassName } from 'config';
+import { AccessorKey, ChudoTableColumn, ChudoTablePaginationState, DataFetcherParserResult, DataFetcherProps, TableStyleContextType } from 'types';
+import { columnSorterClassName, headerCaptionClassName, headerClassName, paginationBorderClassName, paginationCaptionClassName, paginationCaptionNumberClassName, paginationClassName, paginationMetaClassName, paginationNavigationClassName, paginationNavigationItemClassName, paginationNavigationPageActiveClassName, paginationNavigationPageClassName, selectionPanelClassName, tableHeadColumnActionWrapperClassName, tableHeadColumnResizerClassName, tableHeadColumnSimpleWrapperClassName, tableHeadColumnSorterClassName, tableHeadColumnWrapperClassName } from 'config';
+import { ChudoTableColumnProvider } from 'context';
 
 /**
  * Table
@@ -44,7 +47,7 @@ export interface TableProps<T> extends HTMLAttributes<HTMLTableElement>, TableSt
   Cell?: ElementType<TableCellProps>;
 }
 
-export function Table<Record = any>(props: TableProps<Record>) {
+export function Table<Entity = any>(props: TableProps<Entity>) {
   const {
     children,
     Wrapper = TableWrapper,
@@ -58,8 +61,13 @@ export function Table<Record = any>(props: TableProps<Record>) {
     Cell = TableCell,
   } = props;
 
-  const { columns, rows, totalCount } = useTable<Record>();
+  const { columns, rows, totalCount } = useTable<Entity>();
   const { id } = useTableMeta();
+
+
+  const ColumnProvider = (
+    ChudoTableColumnProvider as unknown
+  ) as Provider<ChudoTableColumn<Entity>>;
 
   return (
     <Wrapper tableId={id}>
@@ -68,24 +76,29 @@ export function Table<Record = any>(props: TableProps<Record>) {
         <Head>
           <HeadRow>
             {columns.map((column) => (
-              <Column
-                key={column.accessor}
-                type={column.type}
-                alignment={column.alignment}
-                width={column.width ?? column.minWidth}
-              >
-                <column.Header />
+              <ColumnProvider value={column}>
+                <Column
+                  key={column.accessor}
+                  type={column.type}
+                  alignment={column.alignment}
+                  sortable={column.sortable}
+                  width={column.width ?? column.minWidth}
+                >
+                  <column.HeaderWrapper>
+                    <column.Header />
 
-                {column.sortable && (
-                  <SortButton />
-                )}
+                    {column.sortable && (
+                      <ColumnSorter Arrow={SortArrow} />
+                    )}
 
-                {(column.resizable) && (
-                  <ColumnResizer accessor={column.accessor}>
-                    <Resizer />
-                  </ColumnResizer>
-                )}
-              </Column>
+                    {(column.resizable) && (
+                      <ColumnResizer>
+                        <Resizer />
+                      </ColumnResizer>
+                    )}
+                  </column.HeaderWrapper>
+                </Column>
+              </ColumnProvider>
             ))}
           </HeadRow>
         </Head>
@@ -109,9 +122,9 @@ export function Table<Record = any>(props: TableProps<Record>) {
             </Row>
           ))}
         </Body>
-      </Root>
+      </Root >
       {children}
-    </Wrapper>
+    </Wrapper >
   )
 };
 
@@ -140,17 +153,17 @@ export function TableHeader(props: TableHeaderProps) {
 /**
  * Columns
  */
-export interface ColumnsProps<Record> {
+export interface ColumnsProps<Entity> {
   children: ReactNode;
 }
 
-export function Columns<Record = any,>(props: ColumnsProps<Record>) {
+export function Columns<Entity = any,>(props: ColumnsProps<Entity>) {
   const {
     children,
   } = props;
 
-  const { initializeColumns } = useColumns<Record>();
-  const columns = createColumnsFromChildren<Record>(children);
+  const { initializeColumns } = useColumns<Entity>();
+  const columns = createColumnsFromChildren<Entity>(children);
 
   useEffect(() => {
     initializeColumns(columns);
@@ -171,14 +184,14 @@ export interface ColumnMetaDefinition {
 /**
  * Column
  */
-export interface ColumnProps<Record = any, K extends Extract<keyof Record, string> = Extract<keyof Record, string>> extends ColumnMetaDefinition {
+export interface ColumnProps<Entity = any, K extends Extract<keyof Entity, string> = Extract<keyof Entity, string>> extends ColumnMetaDefinition {
   accessor: K;
   Header?: ReactNode;
   Wrapper?: ElementType;
-  children?: (value: Record) => ReactNode | ReactNode;
+  children?: (value: Entity) => ReactNode | ReactNode;
 }
 
-export function Column<Record = any>(props: ColumnProps<Record>) {
+export function Column<Entity = any>(props: ColumnProps<Entity>) {
   return null;
 }
 
@@ -186,7 +199,7 @@ export function Column<Record = any>(props: ColumnProps<Record>) {
  * MetaTable
  */
 
-export interface MetaTable<Record = any> extends Omit<ColumnProps<Record>, 'accessor'> {
+export interface MetaTable<Entity = any> extends Omit<ColumnProps<Entity>, 'accessor'> {
 
 }
 
@@ -194,11 +207,11 @@ export interface MetaTable<Record = any> extends Omit<ColumnProps<Record>, 'acce
 /**
  * Action Column
  */
-export interface ActionColumnProps<Record = any> extends MetaTable<Record> {
+export interface ActionColumnProps<Entity = any> extends MetaTable<Entity> {
 
 }
 
-export function ActionColumn<Record = any>(props: ActionColumnProps<Record>) {
+export function ActionColumn<Entity = any>(props: ActionColumnProps<Entity>) {
   return null;
 }
 
@@ -206,30 +219,123 @@ export function ActionColumn<Record = any>(props: ActionColumnProps<Record>) {
 /**
  * Select Column
  */
-export interface SelectColumnProps<Record = any> extends ColumnProps<Record> {
+export interface SelectColumnProps<Entity = any> extends ColumnProps<Entity> {
 
 }
 
-export function SelectColumn<Record = any>(props: SelectColumnProps<Record>) {
+export function SelectColumn<Entity = any>(props: SelectColumnProps<Entity>) {
   return null
+}
+
+
+/**
+ * 
+ */
+
+export interface TableColumnSimpleWrapperProps<Entity, Key> extends HTMLAttributes<HTMLDivElement> {
+  children: ReactNode;
+  accessor?: Key;
+}
+
+
+export function TableColumnSimpleWrapper<Entity = any, K extends Extract<keyof Entity, string> = Extract<keyof Entity, string>>(props: TableColumnSimpleWrapperProps<Entity, K>) {
+  const { children, accessor: propAccessor } = props;
+
+  return <div className={clsx(tableHeadColumnWrapperClassName, tableHeadColumnSimpleWrapperClassName)}>{children}</div>
+}
+
+
+
+/**
+ * 
+ */
+
+export interface TableColumnActionWrapperProps<Entity, Key> extends HTMLAttributes<HTMLButtonElement> {
+  children: ReactNode;
+  accessor?: Key;
+}
+
+
+export function TableColumnActionWrapper<Entity = any, K extends Extract<keyof Entity, string> = Extract<keyof Entity, string>>(props: TableColumnActionWrapperProps<Entity, K>) {
+  const { children, accessor: propAccessor } = props
+
+  const { sortable, accessor: columnAccessor } = useChudoTableColumnContext();
+  const accessor = columnAccessor ?? propAccessor;
+
+  const { toggleSort } = useColumnSort(accessor)
+
+  const handleColumnClick = useCallback(() => {
+    if (!sortable) {
+      return
+    }
+
+    toggleSort();
+  }, [sortable, toggleSort])
+
+  return <button onClick={handleColumnClick} className={clsx(tableHeadColumnWrapperClassName, tableHeadColumnActionWrapperClassName)}>{children}</button>
+}
+
+
+
+/**
+ * IndeterminateCheckboxInput
+ */
+
+export function IndeterminateCheckboxInput() {
+  const { isSomeSelected, isAllSelected, toggleAllRowsSelection } = useRowSelection();
+
+  return (
+    <IndeterminateCheckbox
+      checked={isAllSelected}
+      indeterminate={isAllSelected ? false : isSomeSelected}
+      onClick={toggleAllRowsSelection}
+    />
+  )
+}
+
+/**
+ * CheckboxInput
+ */
+
+export interface CheckboxInputProps {
+  id: string;
+}
+
+export function CheckboxInput(props: CheckboxInputProps) {
+  const { id } = props;
+  const { isRowSelected, toggleRowSelection } = useRowSelection();
+
+  const checked = useMemo(() => isRowSelected(id), [id, isRowSelected])
+
+  const handleChange = useCallback(() => {
+    toggleRowSelection(id)
+  }, [toggleRowSelection, id])
+
+  return (
+    <IndeterminateCheckbox
+      checked={checked}
+      onChange={handleChange}
+    />
+  )
 }
 
 /**
  * Data Source
  */
 
-export interface DataSourceProps<Record, RemoteData> {
-  data?: Record[];
-  fetcher?: (props: DataFetcherProps) => Promise<RemoteData>;
-  parse?: (response: RemoteData) => DataFetcherParserResult<Record>;
+export interface DataSourceProps<Entity, RemoteData> {
+  data?: Entity[];
+  fetcher?: (props: DataFetcherProps<Entity>) => Promise<RemoteData>;
+  parse?: (response: RemoteData) => DataFetcherParserResult<Entity>;
 }
 
-export function DataSource<Record = any, RemoteData = Record[]>(props: DataSourceProps<Record, RemoteData>) {
+export function DataSource<Entity = any, RemoteData = Entity[]>(props: DataSourceProps<Entity, RemoteData>) {
   const { data, fetcher, parse } = props;
 
-  const { currentPage: page, pageSize } = usePagination<Record, RemoteData>();
-  const { startFetching, setRemoteData, handleFetchError } = useFetchData<Record, RemoteData>();
-  const { setRows } = useSetRows<Record, RemoteData>()
+  const [sorting] = useSorting<Entity, RemoteData>();
+  const { currentPage: page, pageSize } = usePagination<Entity, RemoteData>();
+  const { startFetching, setRemoteData, handleFetchError } = useFetchData<Entity, RemoteData>();
+  const { setRows } = useSetRows<Entity, RemoteData>()
 
   const fetch = async () => {
     if (!fetcher) {
@@ -239,14 +345,20 @@ export function DataSource<Record = any, RemoteData = Record[]>(props: DataSourc
     startFetching();
 
     try {
+      const limit = pageSize;
+      const offset = (page - 1) * pageSize
+
       const result = await fetcher({
         page,
-        pageSize
+        pageSize,
+        limit,
+        offset,
+        sorting,
       });
 
       const remoteData = isFunction(parse)
         ? parse(result)
-        : { data: result } as DataFetcherParserResultInterface<Record>;
+        : { data: result } as DataFetcherParserResult<Entity>;
 
       setRemoteData(remoteData)
     } catch (error) {
@@ -260,7 +372,7 @@ export function DataSource<Record = any, RemoteData = Record[]>(props: DataSourc
     }
 
     fetch();
-  }, [page]);
+  }, [page, sorting]);
 
   useEffect(function initializeWithData() {
     if (!data) {
@@ -276,15 +388,15 @@ export function DataSource<Record = any, RemoteData = Record[]>(props: DataSourc
 /**
  * Data Transformer
  */
-export interface DataTransformerProps<Record, RemoteData> {
-  getRows: ((response: RemoteData) => Record[]) | string;
+export interface DataTransformerProps<Entity, RemoteData> {
+  getRows: ((response: RemoteData) => Entity[]) | string;
 }
 
-export function DataTransformer<Record = any, RemoteData = Record[]>(props: DataTransformerProps<Record, RemoteData>) {
+export function DataTransformer<Entity = any, RemoteData = Entity[]>(props: DataTransformerProps<Entity, RemoteData>) {
   const { getRows } = props;
 
-  const { response } = useResponse<Record, RemoteData>()
-  const { setRows } = useSetRows<Record, RemoteData>()
+  const { response } = useResponse<Entity, RemoteData>()
+  const { setRows } = useSetRows<Entity, RemoteData>()
 
   useEffect(function handleResponseChanged() {
     if (!response) {
@@ -299,6 +411,69 @@ export function DataTransformer<Record = any, RemoteData = Record[]>(props: Data
   }, [response])
 
   return null;
+}
+
+/**
+ * Column Resizer
+ */
+
+export interface ColumnResizerProps<Entity> {
+  accessor?: AccessorKey<Entity>;
+  children: ReactNode;
+}
+
+export function ColumnResizer<Entity = any>(props: ColumnResizerProps<Entity>) {
+  const { children, accessor: propAccessor } = props
+
+  const { accessor: columnAccessor } = useChudoTableColumnContext();
+  const accessor = columnAccessor ?? propAccessor;
+
+  const { isResizing, startResize, stopResize } = useColumnResize<Entity>(accessor);
+
+  const handleMouseDown = useCallback((event: MouseEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLDivElement;
+
+    // TODO: add data-column-header-attr 
+    const columnEl = target.closest<HTMLDivElement>('[role="columnheader"]');
+
+    if (!columnEl) {
+      return;
+    }
+
+    const startOffset = (columnEl.offsetWidth - event.pageX);
+
+    startResize(startOffset)
+  }, [])
+
+  return (
+    <div className={tableHeadColumnResizerClassName} onMouseDown={handleMouseDown}>
+      {children}
+    </div>
+  )
+}
+
+/**
+ * Column Sorter
+ */
+
+export interface ColumnSorterProps<Entity> {
+  accessor?: AccessorKey<Entity>;
+  Arrow: ComponentType<SortArrowProps>;
+}
+
+export function ColumnSorter<Entity = any>(props: ColumnSorterProps<Entity>) {
+  const { Arrow, accessor: propAccessor } = props
+
+  const { accessor: columnAccessor } = useChudoTableColumnContext();
+  const accessor = columnAccessor ?? propAccessor;
+
+  const { sort } = useColumnSort(accessor)
+
+  return (
+    <div className={columnSorterClassName}>
+      <Arrow sortDir={sort} isCurrent={!!sort} />
+    </div>
+  )
 }
 
 
@@ -330,59 +505,22 @@ export function SelectedPanel(props: SelectedPanelProps) {
 }
 
 /**
- * 
- */
-
-export interface ColumnResizerProps<Record> {
-  accessor: AccessorKey<Record>;
-  children: ReactNode;
-}
-
-export function ColumnResizer<Record = any>(props: ColumnResizerProps<Record>) {
-  const { children, accessor } = props
-
-  const { isResizing, startResize, stopResize } = useColumnResize<Record>(accessor);
-
-  const handleMouseDown = useCallback((event: MouseEvent<HTMLDivElement>) => {
-    const target = event.target as HTMLDivElement;
-
-    // TODO: add data-column-header-attr 
-    const columnEl = target.closest<HTMLDivElement>('[role="columnheader"]');
-
-    if (!columnEl) {
-      return;
-    }
-
-    const startOffset = (columnEl.offsetWidth - event.pageX);
-
-    startResize(startOffset)
-  }, [])
-
-  return (
-    <div className={tableHeadColumnResizerClassName} onMouseDown={handleMouseDown}>
-      {children}
-    </div>
-  )
-}
-
-
-/**
  * Pagination
  */
-export interface PaginationProps<Record, RemoteData> extends Pick<TableStyleContextType, 'border'> {
-  pageSize?: ChudoTablePaginationState["pageSize"];
+export interface PaginationProps<Entity, RemoteData> extends Pick<TableStyleContextType, 'border'> {
+  pageSize: ChudoTablePaginationState["pageSize"];
   getTotalCount?: ((response: RemoteData) => number) | string;
   getTotalPages?: ((response: RemoteData) => number) | string;
 }
 
-export function Pagination<Record = any, RemoteData = Record[]>(props: PaginationProps<Record, RemoteData>) {
+export function Pagination<Entity = any, RemoteData = Entity[]>(props: PaginationProps<Entity, RemoteData>) {
   const { pageSize, getTotalCount, getTotalPages, border } = props;
 
   const {
     border: tableBorder,
   } = useTableLayoutContext();
 
-  const { response } = useResponse<Record, RemoteData>()
+  const { response } = useResponse<Entity, RemoteData>()
   const {
     setTotalPages,
     setPageSize,
@@ -396,7 +534,7 @@ export function Pagination<Record = any, RemoteData = Record[]>(props: Paginatio
     hasPrevPage,
     nextPage,
     prevPage,
-  } = usePagination<Record, RemoteData>();
+  } = usePagination<Entity, RemoteData>();
 
   useEffect(function handlePageSizeChanged() {
     if (!pageSize) {
@@ -441,6 +579,9 @@ export function Pagination<Record = any, RemoteData = Record[]>(props: Paginatio
     Array(totalPages).fill(-1).map((_v, index) => index + 1)
     , [totalPages])
 
+  const from = ((currentPage - 1) * pageSize ?? 1) + 1;
+  const to = currentPage * pageSize
+
   const layoutStyles = {
     border: border ?? tableBorder,
   }
@@ -456,7 +597,7 @@ export function Pagination<Record = any, RemoteData = Record[]>(props: Paginatio
       <div className={paginationMetaClassName}>
         <div className={paginationCaptionClassName}>
           <span >
-            Showing <span className={paginationCaptionNumberClassName}>{currentPage}</span> to <span className={paginationCaptionNumberClassName}>{currentPage * pageSize}</span> of <span className={paginationCaptionNumberClassName}>{totalCount}</span>
+            Showing <span className={paginationCaptionNumberClassName}>{from}</span> to <span className={paginationCaptionNumberClassName}>{to}</span> of <span className={paginationCaptionNumberClassName}>{totalCount}</span>
           </span>
         </div>
 
@@ -503,50 +644,3 @@ export function Pagination<Record = any, RemoteData = Record[]>(props: Paginatio
     </nav >
   )
 };
-
-
-/**
- * IndeterminateCheckboxInput
- */
-
-export function IndeterminateCheckboxInput() {
-  const { isSomeSelected, isAllSelected, toggleAllRowsSelection } = useRowSelection();
-
-  return (
-    <IndeterminateCheckbox
-      checked={isAllSelected}
-      indeterminate={isAllSelected ? false : isSomeSelected}
-      onClick={toggleAllRowsSelection}
-    />
-  )
-}
-
-/**
- * CheckboxInput
- */
-
-export function CheckboxInput(props) {
-  const { id } = props;
-  const { isRowSelected, toggleRowSelection } = useRowSelection();
-
-  const checked = useMemo(() => isRowSelected(id), [id, isRowSelected])
-
-  const handleChange = useCallback(() => {
-    toggleRowSelection(id)
-  }, [toggleRowSelection, id])
-
-  return (
-    <IndeterminateCheckbox
-      checked={checked}
-      onChange={handleChange}
-    />
-  )
-}
-
-/**
- * 
- */
-
-export function SortButton() {
-  return null;
-}

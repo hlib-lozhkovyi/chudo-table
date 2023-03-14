@@ -123,8 +123,8 @@ The libary is in the progress (this is pet project!). Here is a feature list in 
 - [x] Fixed Column
 - [x] Selection
 - [x] Pagination
-- [x] Basic sorting
 - [ ] Searching
+- [x] Sorting
 - [x] Layouts and styling
 
 #### Pre-beta
@@ -143,6 +143,7 @@ The libary is in the progress (this is pet project!). Here is a feature list in 
 - [ ] Column Group
 - [ ] Data Formatting
 - [ ] 🐛 Bugifxes :)
+  – [ ] Stop prev fetching on page change
 
 ### Version 2
 
