@@ -10,7 +10,6 @@ import ChudoTable, {
   Pagination,
   TableHeader
 } from 'index';
-import { SelectedPanel } from 'components';
 
 interface User {
   id: string;
@@ -27,7 +26,7 @@ interface UserResponse {
   users: User[];
 }
 
-export const Test = () => {
+export const Demo = () => {
   const fetcher = ({ limit, offset }: DataFetcherProps<User>): Promise<UserResponse> => {
     return fetch(`https://dummyjson.com/users?limit=${limit}&skip=${offset}`)
       .then(response => response.json())
@@ -37,13 +36,14 @@ export const Test = () => {
     <ChudoTable
       id="users"
       idAccessor="id"
+      fixed={false}
       rounded
       border
       stripe
       rowBorder
-      compact
+      // columnBorder
+      // compact
       highlightRow
-      highlightColumn
     >
       <TableHeader caption="Users" />
       <Table>
@@ -52,9 +52,8 @@ export const Test = () => {
           <Column<User>
             accessor="image"
             Header="Profile"
-            width={300}
-            minWidth={40}
-            sortable
+            sortable={false}
+            resizable
           >
             {({ image, firstName, email }) =>
               <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -74,7 +73,7 @@ export const Test = () => {
               </span>
             }
           </Column>
-          <Column accessor="email" Header="Email" minWidth={140} sortable />
+          <Column accessor="email" Header="Email" resizable sortable={false} />
           <ActionColumn<User> Header={"Actions"}>
             {({ id }) =>
               <>

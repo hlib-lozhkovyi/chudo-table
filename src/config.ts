@@ -8,22 +8,31 @@ export const containerRoundedClassName = BASE_CLASS + '--rounded';
 export const headerClassName = BASE_CLASS + '__header';
 export const headerCaptionClassName = headerClassName + '__caption';
 
-export const wrapperClassName = BASE_CLASS + '__wrapper';
+export const tableWrapperClassName = BASE_CLASS + '__wrapper';
 
-export const wrapperBorderClassName = wrapperClassName + '--border';
-export const wrapperStripeClassName = wrapperClassName + '--stripe';
-export const wrapperRowBorderClassName = wrapperClassName + '--row-border';
-export const wrapperCompactClassName = wrapperClassName + '--compact';
-export const wrapperHighlightRowClassName = wrapperClassName + '--highlight-row';
-export const wrapperHighlightColumnClassName = wrapperClassName + '--highlight-column';
+export const tableWrapperFixedClassName = tableWrapperClassName + '--fixed';
+export const tableWrapperBorderClassName = tableWrapperClassName + '--border';
 
-export const tableClassName = wrapperClassName + '__table';
+export const tableClassName = tableWrapperClassName + '__table';
+
+export const tableFixedClassName = tableClassName + '--fixed';
+export const tableStripeClassName = tableClassName + '--stripe';
+export const tableRowBorderClassName = tableClassName + '--row-border';
+export const tableCompactClassName = tableClassName + '--compact';
+export const tableHighlightRowClassName = tableClassName + '--highlight-row';
+
 export const tableRowClassName = tableClassName + '__row';
+
 export const tableCellClassName = tableRowClassName + '__cell';
+export const tableCellRowBorderClassName = tableCellClassName + '--row-border';
+export const tableCellColumnBorderClassName = tableCellClassName + '--column-border';
 
 export const tableHeadClassName = tableClassName + '__head';
+
 export const tableHeadRowClassName = tableHeadClassName + '__row';
+
 export const tableHeadColumnClassName = tableHeadRowClassName + '__cell';
+export const tableHeadColumnBorderClassName = tableHeadColumnClassName + '--border';
 
 export const tableHeadColumnWrapperClassName = tableHeadColumnClassName + '__wrapper';
 export const tableHeadColumnSimpleWrapperClassName = tableHeadColumnWrapperClassName + '--simple';
@@ -33,7 +42,9 @@ export const tableHeadColumnResizerClassName = tableHeadRowClassName + '__resize
 
 export const tableBodyClassName = tableClassName + '__body';
 export const tableBodyRowClassName = tableBodyClassName + '__row';
+
 export const tableBodyCellClassName = tableBodyRowClassName + '__cell';
+
 export const tableBodyCellWrapperClassName = tableBodyCellClassName + '__wrapper';
 
 export const paginationClassName = containerClassName + '__pagination';

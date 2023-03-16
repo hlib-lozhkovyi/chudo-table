@@ -8,12 +8,15 @@ export type ChudoTableColumnType = 'common' | 'select' | 'action';
 
 export type ChudoTableColumnAlignment = 'left' | 'center' | 'right';
 
+export type ChudoTableColumnWidth = number | 'min-content' | 'max-content';
+
 export interface ChudoTableColumnMetaConfig {
   resizable: boolean;
+  computedWidth: number;
   width: number;
-  minWidth?: number;
-  maxWidth?: number;
-  sortable?: boolean;
+  minWidth: ChudoTableColumnWidth;
+  maxWidth: ChudoTableColumnWidth;
+  sortable: boolean;
   alignment: ChudoTableColumnAlignment;
 }
 
@@ -58,6 +61,17 @@ export interface ChudoTableState<Entity, RemoteData> extends ChudoTablePaginatio
   rows: ChudoTableRow<Entity>[];
   selectedIds: EntityID[];
   sorting: ChudotTableSortState<Entity>;
+}
+
+export interface TableStyleContextType {
+  fixed?: boolean;
+  border?: boolean;
+  rounded?: boolean;
+  stripe?: boolean;
+  rowBorder?: boolean;
+  columnBorder?: boolean;
+  compact?: boolean;
+  highlightRow?: boolean;
 }
 
 export interface DataFetcherProps<Entity> {
@@ -127,13 +141,3 @@ export interface ChudoTableConfig<Entity, Key extends AccessorKey<Entity> = Acce
 export type ChudoTableContextType<Entity, RemoteData> = ChudoTableState<Entity, RemoteData> &
   ChudoTableHelpers<Entity, RemoteData> &
   ChudoTableConfig<Entity>;
-
-export interface TableStyleContextType {
-  border?: boolean;
-  rounded?: boolean;
-  stripe?: boolean;
-  rowBorder?: boolean;
-  compact?: boolean;
-  highlightRow?: boolean;
-  highlightColumn?: boolean;
-}

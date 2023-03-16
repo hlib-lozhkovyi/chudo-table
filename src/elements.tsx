@@ -1,43 +1,42 @@
-import React, { ChangeEvent, Children, HTMLAttributes, InputHTMLAttributes, ReactNode, useCallback, useMemo, useState } from "react";
+import React, { HTMLAttributes, InputHTMLAttributes, ReactNode, forwardRef, useCallback, useMemo } from "react";
 import clsx from 'classnames';
 import isNil from 'lodash/isNil';
 import {
   containerClassName,
-  wrapperClassName,
-  wrapperStripeClassName,
-  wrapperRowBorderClassName,
-  wrapperCompactClassName,
-  wrapperHighlightRowClassName,
-  wrapperHighlightColumnClassName,
+  containerBorderClassName,
+  containerRoundedClassName,
+  tableWrapperBorderClassName,
+  tableWrapperClassName,
+  tableWrapperFixedClassName,
   tableClassName,
+  tableFixedClassName,
+  tableStripeClassName,
+  tableRowBorderClassName,
+  tableCompactClassName,
+  tableHighlightRowClassName,
+  tableRowClassName,
+  tableCellClassName,
+  tableCellRowBorderClassName,
+  tableCellColumnBorderClassName,
   tableHeadClassName,
   tableHeadRowClassName,
   tableHeadColumnClassName,
+  tableHeadColumnBorderClassName,
   tableBodyClassName,
   tableBodyRowClassName,
   tableBodyCellClassName,
   tableBodyCellWrapperClassName,
-  tableCellClassName,
-  tableRowClassName,
-  containerBorderClassName,
-  containerRoundedClassName,
-  wrapperBorderClassName,
-  tableHeadColumnResizerClassName,
   columnResizerClassName,
   columnResizerFullClassName,
   columnResizerLineClassName,
-  tableHeadColumnActionWrapperClassName,
-  tableHeadColumnSimpleWrapperClassName,
-  tableHeadColumnWrapperClassName,
 } from 'config'
-import { ChudoTableColumnAlignment, ChudoTableColumnSortDirection, ChudoTableColumnType, RecordID, TableStyleContextType } from "types";
-import { useIndeterminateCheckbox, useTableCaption, useTableLayoutContext } from "hooks";
-import { widthToStyleValue } from "utils";
+import { ChudoTableColumnAlignment, ChudoTableColumnSortDirection, ChudoTableColumnType, EntityID, TableStyleContextType } from "types";
+import { useTableCaption, useControlledTableLayout } from "hooks";
 
 /**
  * Wrapper
  */
-export interface TableContainerProps extends HTMLAttributes<HTMLDivElement>, Pick<TableStyleContextType, 'border' | 'rounded'> {
+export interface TableContainerProps extends HTMLAttributes<HTMLDivElement>, Pick<TableStyleContextType, 'fixed' | 'border' | 'rounded'> {
   children: ReactNode;
 }
 
@@ -45,6 +44,7 @@ export const TableContainer = (props: TableContainerProps) => {
   const {
     className,
     children,
+    fixed,
     border,
     rounded,
     ...rest
@@ -53,19 +53,20 @@ export const TableContainer = (props: TableContainerProps) => {
   const getProps = useCallback(() => rest, [rest])
 
   const {
-    border: tableBorder
-  } = useTableLayoutContext();
-
-  const layoutStyles = {
-    border: border ?? tableBorder,
-  }
+    border: containerBorder,
+    rounded: containerRounded,
+  } = useControlledTableLayout({
+    fixed,
+    border,
+    rounded,
+  });
 
   return (
     <figure
       {...getProps()}
       className={clsx(containerClassName, {
-        [containerBorderClassName]: layoutStyles.border,
-        [containerRoundedClassName]: rounded,
+        [containerBorderClassName]: containerBorder,
+        [containerRoundedClassName]: containerRounded,
       })}
     >
       {children}
@@ -75,7 +76,7 @@ export const TableContainer = (props: TableContainerProps) => {
 /**
  * Wrapper
  */
-export interface TableWrapperProps extends HTMLAttributes<HTMLDivElement>, Omit<TableStyleContextType, 'rounded'> {
+export interface TableWrapperProps extends HTMLAttributes<HTMLDivElement>, Pick<TableStyleContextType, 'fixed' | 'border'> {
   children: ReactNode;
   tableId?: string;
 }
@@ -85,36 +86,22 @@ export const TableWrapper = (props: TableWrapperProps) => {
     className,
     children,
     tableId,
+    fixed,
     border,
-    stripe,
-    rowBorder,
-    compact,
-    highlightRow,
-    highlightColumn,
     ...rest
   } = props;
 
-  const {
-    border: tableBorder,
-    stripe: tableStripe,
-    rowBorder: tableRowBorder,
-    compact: tableCompact,
-    highlightRow: tableHighlightRow,
-    highlightColumn: tableHighlightColumn
-  } = useTableLayoutContext();
+  const tableCaption = useTableCaption(tableId);
 
-  const layoutStyles = {
-    border: border ?? tableBorder,
-    stripe: stripe ?? tableStripe,
-    rowBorder: rowBorder ?? tableRowBorder,
-    compact: compact ?? tableCompact,
-    highlightRow: highlightRow ?? tableHighlightRow,
-    highlightColumn: highlightColumn ?? tableHighlightColumn,
-  }
+  const {
+    fixed: tableWrapperFixed,
+    border: tableWrapperBorder,
+  } = useControlledTableLayout({
+    fixed,
+    border,
+  });
 
   const getProps = useCallback(() => rest, [rest]);
-
-  const tableCaption = useTableCaption(tableId);
 
   return (
     <div
@@ -123,13 +110,9 @@ export const TableWrapper = (props: TableWrapperProps) => {
       {...(tableCaption && ({
         'aria-labelledby': tableCaption
       }))}
-      className={clsx(wrapperClassName, {
-        [wrapperBorderClassName]: layoutStyles.border,
-        [wrapperStripeClassName]: layoutStyles.stripe,
-        [wrapperRowBorderClassName]: layoutStyles.rowBorder,
-        [wrapperCompactClassName]: layoutStyles.compact,
-        [wrapperHighlightRowClassName]: layoutStyles.highlightRow,
-        [wrapperHighlightColumnClassName]: layoutStyles.highlightColumn,
+      className={clsx(tableWrapperClassName, {
+        [tableWrapperFixedClassName]: tableWrapperFixed,
+        [tableWrapperBorderClassName]: tableWrapperBorder,
       })}
       {...getProps()}
     >
@@ -141,30 +124,68 @@ export const TableWrapper = (props: TableWrapperProps) => {
 /**
  * Root
  */
-export interface TableRootProps extends HTMLAttributes<HTMLTableElement> {
+export interface TableRootProps extends HTMLAttributes<HTMLTableElement>, Pick<TableStyleContextType,
+  'fixed' |
+  'stripe' |
+  'rowBorder' |
+  'compact' |
+  'highlightRow'
+> {
   children: ReactNode;
   rowCount?: number;
 }
 
-export const TableRoot = (props: TableRootProps) => {
-  const { id, className, children, rowCount, ...rest } = props;
+export const TableRoot = forwardRef<HTMLTableElement, TableRootProps>((props, ref) => {
+  const {
+    id,
+    className,
+    children,
+    rowCount,
+    fixed,
+    stripe,
+    rowBorder,
+    compact,
+    highlightRow,
+    ...rest
+  } = props;
 
   const getProps = useCallback(() => rest, [rest])
 
+  const {
+    fixed: tableRootFixed,
+    stripe: tableRootStripe,
+    rowBorder: tableRootRowBorder,
+    compact: tableRootCompact,
+    highlightRow: tableRootHighlightRow,
+  } = useControlledTableLayout({
+    fixed,
+    stripe,
+    rowBorder,
+    compact,
+    highlightRow,
+  });
+
   return (
     <table
+      ref={ref}
       aria-rowcount={rowCount}
-      className={clsx(tableClassName)}
+      className={clsx(tableClassName, {
+        [tableFixedClassName]: tableRootFixed,
+        [tableStripeClassName]: tableRootStripe,
+        [tableRowBorderClassName]: tableRootRowBorder,
+        [tableCompactClassName]: tableRootCompact,
+        [tableHighlightRowClassName]: tableRootHighlightRow,
+      })}
       {...getProps()}
     >
       {children}
-    </table>
+    </table >
   )
-}
+})
 
 
 /**
- * Head
+ * Table Header Container
  */
 export interface TableHeadProps extends HTMLAttributes<HTMLTableSectionElement> {
   children: ReactNode;
@@ -176,14 +197,18 @@ export const TableHead = (props: TableHeadProps) => {
   const getProps = useCallback(() => rest, [rest])
 
   return (
-    <thead role="rowgroup" className={clsx(tableHeadClassName)} {...getProps()}>
+    <thead
+      role="rowgroup"
+      className={clsx(tableHeadClassName)}
+      {...getProps()}
+    >
       {children}
     </thead>
   )
 }
 
 /**
- * Head Row
+ * Table Header Row
  */
 export interface TableHeadRowProps extends HTMLAttributes<HTMLTableRowElement> {
   children: ReactNode;
@@ -204,18 +229,35 @@ export const TableHeadRow = (props: TableHeadRowProps) => {
 /**
  * Head Column
  */
-export interface TableColumnProps extends HTMLAttributes<HTMLTableCellElement> {
+export interface TableColumnProps extends HTMLAttributes<HTMLTableCellElement>, Pick<TableStyleContextType,
+  'border'
+> {
   children: ReactNode;
-  width: number;
   type: ChudoTableColumnType;
   alignment: ChudoTableColumnAlignment;
   sortable: boolean | undefined;
 }
 
 export const TableColumn = (props: TableColumnProps) => {
-  const { className, children, width, type, alignment, sortable, ...rest } = props;
+  const {
+    className,
+    children,
+    type,
+    alignment,
+    sortable,
+    border,
+    ...rest
+  } = props;
 
   const getProps = useCallback(() => rest, [rest]);
+
+  const {
+    border: tableColumnBorder,
+    rowBorder: tableCellRowBorder,
+    columnBorder: tableCellColumnBorder,
+  } = useControlledTableLayout({
+    border,
+  });
 
   return (
     <th
@@ -224,10 +266,11 @@ export const TableColumn = (props: TableColumnProps) => {
       data-alignment={alignment}
       data-sortable={sortable}
       aria-sort="ascending"
-      className={clsx(tableCellClassName, tableHeadColumnClassName)}
-      style={{
-        width: widthToStyleValue(width)
-      }}
+      className={clsx(tableCellClassName, tableHeadColumnClassName, {
+        [tableHeadColumnBorderClassName]: tableColumnBorder,
+        [tableCellRowBorderClassName]: tableCellRowBorder,
+        [tableCellColumnBorderClassName]: tableCellColumnBorder
+      })}
       {...getProps()}
     >
       {children}
@@ -262,7 +305,7 @@ export const TableBody = (props: TableBodyProps) => {
 
 export interface TableRowProps extends HTMLAttributes<HTMLTableRowElement> {
   children: ReactNode;
-  rowId: RecordID;
+  rowId: EntityID;
   rowIndex: number;
 }
 
@@ -275,7 +318,7 @@ export const TableRow = (props: TableRowProps) => {
     ...rest
   } = props;
 
-  const getProps = useCallback(() => rest, [rest])
+  const getProps = useCallback(() => rest, [rest]);
 
   return (
     <tr
@@ -294,18 +337,36 @@ export const TableRow = (props: TableRowProps) => {
  * Cell
  */
 
-export interface TableCellProps extends HTMLAttributes<HTMLTableCellElement> {
+export interface TableCellProps extends HTMLAttributes<HTMLTableCellElement>, Pick<TableStyleContextType,
+  'border'
+> {
   children: ReactNode;
-  rowId: RecordID;
+  rowId: EntityID;
   rowIndex: number;
   type: ChudoTableColumnType;
   alignment: ChudoTableColumnAlignment;
 }
 
 export const TableCell = (props: TableCellProps) => {
-  const { children, rowId, rowIndex, type, alignment, ...rest } = props;
+  const {
+    children,
+    rowId,
+    rowIndex,
+    type,
+    alignment,
+    border,
+    ...rest
+  } = props;
 
   const getProps = useCallback(() => rest, [rest])
+
+  const {
+    rowBorder: tableCellRowBorder,
+    columnBorder: tableCellColumnBorder,
+  } = useControlledTableLayout({
+
+  });
+
 
   return (
     <td
@@ -314,7 +375,10 @@ export const TableCell = (props: TableCellProps) => {
       aria-rowindex={rowIndex}
       data-type={type}
       data-alignment={alignment}
-      className={clsx(tableCellClassName, tableBodyCellClassName)}
+      className={clsx(tableCellClassName, tableBodyCellClassName, {
+        [tableCellRowBorderClassName]: tableCellRowBorder,
+        [tableCellColumnBorderClassName]: tableCellColumnBorder
+      })}
       {...getProps()}
     >
       {children}

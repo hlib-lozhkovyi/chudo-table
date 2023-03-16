@@ -1,34 +1,37 @@
 import './styles.scss';
 
-import React, { ElementType, Provider, ReactNode } from 'react';
-import { TableContainerPropsInterface, TableContainer } from 'elements';
+import React, { ElementType, Provider, ReactNode, useMemo } from 'react';
+import { TableContainerProps, TableContainer } from 'elements';
 
 import { UseChudoTableHook, useChudoTable } from 'hooks';
 import { ChudoTableProvider, TableStyleProvider } from 'context';
 import { ChudoTableContextType, TableStyleContextType } from 'types';
 
-export interface ChudoTableProps<Record> extends UseChudoTableHook<Record>, TableContainerPropsInterface, TableStyleContextType {
+export interface ChudoTableProps<Record> extends UseChudoTableHook<Record>, TableContainerProps, TableStyleContextType {
   children: ReactNode;
-  Container?: ElementType<TableContainerPropsInterface>;
+  Container?: ElementType<TableContainerProps>;
 }
 
 export function ChudoTable<Record = any, RemoteData = any>(props: ChudoTableProps<Record>) {
   const {
     children,
     Container = TableContainer,
+    fixed,
+    rounded,
     border,
     stripe,
     rowBorder,
+    columnBorder,
     compact,
     highlightRow,
-    highlightColumn,
     ...rest
   } = props;
+
+  // TODO: add invariaint if DataSource isn't the latest children
 
   const {
     id,
     idAccessor,
-
     ...containerProps
   } = rest
 
@@ -43,15 +46,26 @@ export function ChudoTable<Record = any, RemoteData = any>(props: ChudoTableProp
     ChudoTableProvider as unknown
   ) as Provider<ChudoTableContextType<Record, RemoteData>>;
 
-
-  const tableStyle: TableStyleContextType = {
+  const tableStyle: TableStyleContextType = useMemo(() => ({
+    fixed,
     border,
+    rounded,
     stripe,
     rowBorder,
+    columnBorder,
     compact,
     highlightRow,
-    highlightColumn,
-  }
+  }),
+    [
+      fixed,
+      border,
+      rounded,
+      stripe,
+      rowBorder,
+      columnBorder,
+      compact,
+      highlightRow,
+    ]);
 
   return (
     <TableProvider value={chudoTable}>

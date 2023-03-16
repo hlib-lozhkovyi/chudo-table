@@ -1,9 +1,9 @@
-import React, { ElementType, HTMLAttributes, ReactNode, useEffect, useCallback, useMemo, MouseEvent, ComponentType, Provider } from 'react';
+import React, { ElementType, PropsWithRef, HTMLAttributes, ReactNode, useEffect, useCallback, useMemo, MouseEvent, ComponentType, Provider, useRef } from 'react';
 import clsx from 'classnames';
 import isFunction from 'lodash/isFunction';
 import get from 'lodash/get';
 
-import { useChudoTableColumnContext, useColumnResize, useColumnSort, useColumns, useFetchData, usePagination, useResponse, useRowSelection, useSetRows, useSorting, useTable, useTableLayoutContext, useTableMeta } from 'hooks';
+import { useChudoTableColumnContext, useColumnResize, useColumnSort, useColumns, useFetchData, usePagination, useResponse, useRowSelection, useSetRows, useSorting, useTable, useTableComputedStyles, useTableMeta, useControlledTableLayout } from 'hooks';
 import {
   TableWrapperProps,
   TableWrapper,
@@ -29,7 +29,7 @@ import {
 } from 'elements'
 import { createColumnsFromChildren, getCellValue } from 'utils';
 import { AccessorKey, ChudoTableColumn, ChudoTablePaginationState, DataFetcherParserResult, DataFetcherProps, TableStyleContextType } from 'types';
-import { columnSorterClassName, headerCaptionClassName, headerClassName, paginationBorderClassName, paginationCaptionClassName, paginationCaptionNumberClassName, paginationClassName, paginationMetaClassName, paginationNavigationClassName, paginationNavigationItemClassName, paginationNavigationPageActiveClassName, paginationNavigationPageClassName, selectionPanelClassName, tableHeadColumnActionWrapperClassName, tableHeadColumnResizerClassName, tableHeadColumnSimpleWrapperClassName, tableHeadColumnSorterClassName, tableHeadColumnWrapperClassName } from 'config';
+import { columnSorterClassName, headerCaptionClassName, headerClassName, paginationBorderClassName, paginationCaptionClassName, paginationCaptionNumberClassName, paginationClassName, paginationMetaClassName, paginationNavigationClassName, paginationNavigationItemClassName, paginationNavigationPageActiveClassName, paginationNavigationPageClassName, selectionPanelClassName, tableHeadColumnActionWrapperClassName, tableHeadColumnResizerClassName, tableHeadColumnSimpleWrapperClassName, tableHeadColumnWrapperClassName } from 'config';
 import { ChudoTableColumnProvider } from 'context';
 
 /**
@@ -37,7 +37,7 @@ import { ChudoTableColumnProvider } from 'context';
  */
 export interface TableProps<T> extends HTMLAttributes<HTMLTableElement>, TableStyleContextType {
   Wrapper?: ElementType<TableWrapperProps>;
-  Root?: ElementType<TableRootProps>;
+  Root?: ElementType<PropsWithRef<TableRootProps>>;
   Head?: ElementType<TableHeadProps>;
   HeadRow?: ElementType<TableHeadRowProps>;
   Column?: ElementType<TableColumnProps>;
@@ -50,6 +50,7 @@ export interface TableProps<T> extends HTMLAttributes<HTMLTableElement>, TableSt
 export function Table<Entity = any>(props: TableProps<Entity>) {
   const {
     children,
+    fixed,
     Wrapper = TableWrapper,
     Root = TableRoot,
     Head = TableHead,
@@ -61,17 +62,30 @@ export function Table<Entity = any>(props: TableProps<Entity>) {
     Cell = TableCell,
   } = props;
 
-  const { columns, rows, totalCount } = useTable<Entity>();
+  const tableRef = useRef<HTMLTableElement | null>(null);
   const { id } = useTableMeta();
-
+  const { columns, rows, totalCount } = useTable<Entity>();
+  const { columnWidth } = useTableComputedStyles<Entity>();
 
   const ColumnProvider = (
     ChudoTableColumnProvider as unknown
   ) as Provider<ChudoTableColumn<Entity>>;
 
+  useEffect(() => {
+    if (!tableRef.current) {
+      return;
+    }
+
+    const gridColumnsWidth = columnWidth
+      .map(([min, max]) => `minmax(${min}, ${max})`)
+      .join(' ')
+
+    tableRef.current.style.gridTemplateColumns = gridColumnsWidth;
+  }, [columnWidth])
+
   return (
-    <Wrapper tableId={id}>
-      <Root id={id} rowCount={totalCount}>
+    <Wrapper tableId={id} fixed={fixed}>
+      <Root ref={tableRef} id={id} rowCount={totalCount} fixed={fixed}>
         {/* todo hide columns / set height 0 if headless */}
         <Head>
           <HeadRow>
@@ -82,7 +96,6 @@ export function Table<Entity = any>(props: TableProps<Entity>) {
                   type={column.type}
                   alignment={column.alignment}
                   sortable={column.sortable}
-                  width={column.width ?? column.minWidth}
                 >
                   <column.HeaderWrapper>
                     <column.Header />
@@ -430,6 +443,8 @@ export function ColumnResizer<Entity = any>(props: ColumnResizerProps<Entity>) {
 
   const { isResizing, startResize, stopResize } = useColumnResize<Entity>(accessor);
 
+  const handleMouseClick = (e) => e.preventDefault();
+
   const handleMouseDown = useCallback((event: MouseEvent<HTMLDivElement>) => {
     const target = event.target as HTMLDivElement;
 
@@ -446,7 +461,7 @@ export function ColumnResizer<Entity = any>(props: ColumnResizerProps<Entity>) {
   }, [])
 
   return (
-    <div className={tableHeadColumnResizerClassName} onMouseDown={handleMouseDown}>
+    <div className={tableHeadColumnResizerClassName} onClick={handleMouseClick} onMouseDown={handleMouseDown}>
       {children}
     </div>
   )
@@ -517,8 +532,8 @@ export function Pagination<Entity = any, RemoteData = Entity[]>(props: Paginatio
   const { pageSize, getTotalCount, getTotalPages, border } = props;
 
   const {
-    border: tableBorder,
-  } = useTableLayoutContext();
+    border: paginationBorder,
+  } = useControlledTableLayout({ border });
 
   const { response } = useResponse<Entity, RemoteData>()
   const {
@@ -582,14 +597,10 @@ export function Pagination<Entity = any, RemoteData = Entity[]>(props: Paginatio
   const from = ((currentPage - 1) * pageSize ?? 1) + 1;
   const to = currentPage * pageSize
 
-  const layoutStyles = {
-    border: border ?? tableBorder,
-  }
-
   return (
     <nav aria-label="Table navigation" className={
       clsx(paginationClassName, {
-        [paginationBorderClassName]: layoutStyles.border,
+        [paginationBorderClassName]: paginationBorder,
       })
     }>
       <SelectedPanel />

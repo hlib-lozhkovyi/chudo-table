@@ -1,6 +1,8 @@
 import { useReducer, useMemo, Reducer, useCallback, useContext, Context, useState, ChangeEvent, useRef, useEffect } from 'react';
 import isFunction from 'lodash/isFunction';
 import get from 'lodash/get';
+import isNumber from 'lodash/isNumber';
+import merge from 'lodash/merge';
 import { ChudoTableColumnContext, ChudoTableContext, TableStyleContext } from 'context';
 import { chudoTableReducer } from 'reducer';
 import {
@@ -22,7 +24,7 @@ import {
   ChudoTableColumnSortDirection,
   ChudotTableSortState
 } from "types";
-import { generateRowId, getRowIndex, isAllRowsSelected } from 'utils';
+import { generateRowId, getRowIndex, isAllRowsSelected, widthToStyleValue } from 'utils';
 
 /**
  * 
@@ -242,6 +244,20 @@ export function useTableLayoutContext() {
   return tableLayout;
 }
 
+/**
+ * 
+ */
+export function useControlledTableLayout(props?: Partial<TableStyleContextType>) {
+  const tableLayout = useTableLayoutContext();
+
+  const layout = useMemo(() => merge({}, tableLayout, props), [tableLayout, props])
+
+  return layout;
+}
+
+/**
+ * 
+ */
 export interface UseTableMetaHook {
   id?: ChudoTableMetaConfig["id"];
 }
@@ -333,7 +349,7 @@ export function useTable<Entity = any, RemoteData = Entity[]>(): UseTableHook<En
  * 
  */
 export function useTableId<Entity = any, RemoteData = Entity[]>(): string | undefined {
-  const { id } = useChudoTableContext<Entity, RemoteData>();
+  const { id } = useChudoTableContext<Entity, RemoteData>() ?? {};
 
   return id
 }
@@ -471,17 +487,21 @@ export function useColumn<
 
 export function useColumnWidth<Entity = any>(accessor: AccessorKey<Entity>): [number, (width: number) => void] {
   const [column, updateColumn] = useColumn<Entity>(accessor);
-  const { width, minWidth = 0, maxWidth = Number.MAX_SAFE_INTEGER } = column;
+  const { computedWidth, minWidth = 0, maxWidth = Number.MAX_SAFE_INTEGER } = column;
 
   const setWidth = useCallback((nextWidth: number) => {
-    if (nextWidth < minWidth || nextWidth > maxWidth) {
+    if (isNumber(minWidth) && nextWidth < minWidth) {
       return;
     }
 
-    updateColumn({ width: nextWidth });
+    if (isNumber(maxWidth) && nextWidth > maxWidth) {
+      return;
+    }
+
+    updateColumn({ computedWidth: nextWidth });
   }, [updateColumn, minWidth, maxWidth])
 
-  return [width, setWidth];
+  return [computedWidth, setWidth];
 }
 
 
@@ -659,5 +679,24 @@ export function useColumnSort<Entity = any, RemoteData = Entity[]>(accessor: Acc
   return {
     sort,
     toggleSort
+  }
+}
+
+/**
+ * 
+ */
+export interface UseTableComputedStylesHook {
+  columnWidth: string[][];
+}
+
+export function useTableComputedStyles<Entity, RemoteData = Entity[]>(): UseTableComputedStylesHook {
+  const { columns } = useChudoTableContext<Entity, RemoteData>();
+
+  const columnWidth = useMemo(() => columns.map(({ minWidth, computedWidth, maxWidth }) => [
+    widthToStyleValue(minWidth), widthToStyleValue(computedWidth ?? maxWidth)
+  ]), [columns])
+
+  return {
+    columnWidth,
   }
 }

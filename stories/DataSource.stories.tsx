@@ -1,14 +1,14 @@
 import React from "react";
 import { ComponentMeta, ComponentStory } from "@storybook/react";
-import { Test } from '../src/test'
+import { Demo } from '../src/demo'
 
 export default {
   title: "Examples/DataSource",
-  component: Test,
+  component: Demo,
   argTypes: {
 
   },
-} as ComponentMeta<typeof Test>;
+} as ComponentMeta<typeof Demo>;
 
 
 interface User {
@@ -17,7 +17,7 @@ interface User {
   email: string;
 }
 
-const Template: ComponentStory<typeof Test> = (args) => <Test {...args} />
+const Template: ComponentStory<typeof Demo> = (args) => <Demo {...args} />
 
 export const Default = Template.bind({});
 Default.args = {

@@ -1,6 +1,7 @@
 import React, { ReactElement, ReactNode, Children } from 'react';
 import isFunction from 'lodash/isFunction';
 import get from 'lodash/get';
+import isNumber from 'lodash/isNumber';
 import {
   Column, SelectColumn, ActionColumn, CheckboxInput, IndeterminateCheckboxInput, ColumnProps, TableColumnActionWrapper,
   TableColumnSimpleWrapper
@@ -87,8 +88,9 @@ export function createColumnsFromChildren<Record = any>(children: React.ReactNod
     }
 
     // ColumnPropsInterface
-    const { accessor, Wrapper, width, minWidth, maxWidth, alignment, sortable } = element.props
-    let { children, Header, HeaderWrapper, resizable } = element.props;
+    const { accessor, Wrapper, width, alignment, sortable } = element.props
+    let { children, Header, HeaderWrapper, minWidth = 'min-content', maxWidth = 'max-content', resizable } = element.props;
+    let computedWidth = width;
 
     const type = getColumnType(element);
 
@@ -108,6 +110,12 @@ export function createColumnsFromChildren<Record = any>(children: React.ReactNod
       if (!HeaderWrapper) {
         HeaderWrapper = TableColumnSimpleWrapper;
       }
+
+      computedWidth = `var(--ct-checkbox-size)`;
+    }
+
+    if (type === 'action') {
+      maxWidth = '1fr';
     }
 
     if (!resizable) {
@@ -128,6 +136,7 @@ export function createColumnsFromChildren<Record = any>(children: React.ReactNod
       width,
       minWidth,
       maxWidth,
+      computedWidth,
       alignment: alignment ?? getColumnDefaultAlignment(type),
       Header: Header
         ? () => Header
@@ -178,8 +187,12 @@ export function isAllRowsSelected(rowsCount: number, pageSize: number) {
 /**
  * 
  */
-export function widthToStyleValue(width: number): string {
-  return `${width}px`
+export function widthToStyleValue(width: number | string): string {
+  if (!isNumber(width)) {
+    return width;
+  }
+
+  return `${width}px`;
 }
 
 /**

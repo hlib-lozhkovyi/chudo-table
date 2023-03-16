@@ -61,7 +61,7 @@ You see? No local state, long configuration object. As simple as it is.
 Nice. But what about pagination? No worries, here is a `<Pagination />` component.
 
 ```jsx
-<ChudoTable id="users" idAccessor="id" rounded border stripe rowBorder compact highlightRow highlightColumn>
+<ChudoTable id="users" idAccessor="id" rounded border stripe rowBorder compact highlightRow>
   <TableHeader caption="Users" />
   <Table>
     <Columns>
@@ -129,12 +129,12 @@ The libary is in the progress (this is pet project!). Here is a feature list in 
 
 #### Pre-beta
 
+- [x] Column Resize
 - [ ] Responsive
 - [ ] Row Editing
 - [ ] Column Filtering
 - [ ] Lazy loading
 - [ ] Expanding
-- [ ] Column Resize
 - [ ] Examples
 
 ### Version 1
@@ -143,7 +143,7 @@ The libary is in the progress (this is pet project!). Here is a feature list in 
 - [ ] Column Group
 - [ ] Data Formatting
 - [ ] 🐛 Bugifxes :)
-  – [ ] Stop prev fetching on page change
+      – [ ] Stop prev fetching on page change
 
 ### Version 2
 
