@@ -137,6 +137,7 @@ The libary is in the progress (this is pet project!). Here is a feature list in 
 - [ ] Column Filtering
 - [ ] Lazy loading
 - [ ] Expanding
+- [ ] Plugin Events API 
 - [ ] Examples
 
 ### Version 1
