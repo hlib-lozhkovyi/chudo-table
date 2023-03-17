@@ -118,18 +118,20 @@ The libary is in the progress (this is pet project!). Here is a feature list in 
 - [x] Basic
 - [x] Declarative Column
 - [x] Custom Cell Rendering
-- [ ] Custom Row Rendering
+- [x] Custom Row Rendering
 - [x] Action Column
 - [x] Fixed Column
 - [x] Selection
-- [x] Pagination
+- [ ] Pagination
 - [ ] Searching
-- [x] Sorting
+- [ ] Sorting
 - [x] Layouts and styling
+- [ ] Remote Data
 
 #### Pre-beta
 
-- [x] Column Resize
+- [ ] Column Resize
+- [ ] Value Formatter
 - [ ] Responsive
 - [ ] Row Editing
 - [ ] Column Filtering

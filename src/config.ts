@@ -18,14 +18,13 @@ export const tableClassName = tableWrapperClassName + '__table';
 export const tableFixedClassName = tableClassName + '--fixed';
 export const tableStripeClassName = tableClassName + '--stripe';
 export const tableRowBorderClassName = tableClassName + '--row-border';
+export const tableColumnBorderClassName = tableClassName + '--column-border';
 export const tableCompactClassName = tableClassName + '--compact';
 export const tableHighlightRowClassName = tableClassName + '--highlight-row';
 
 export const tableRowClassName = tableClassName + '__row';
 
 export const tableCellClassName = tableRowClassName + '__cell';
-export const tableCellRowBorderClassName = tableCellClassName + '--row-border';
-export const tableCellColumnBorderClassName = tableCellClassName + '--column-border';
 
 export const tableHeadClassName = tableClassName + '__head';
 

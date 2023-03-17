@@ -12,16 +12,14 @@ import {
   tableFixedClassName,
   tableStripeClassName,
   tableRowBorderClassName,
+  tableColumnBorderClassName,
   tableCompactClassName,
   tableHighlightRowClassName,
   tableRowClassName,
   tableCellClassName,
-  tableCellRowBorderClassName,
-  tableCellColumnBorderClassName,
   tableHeadClassName,
   tableHeadRowClassName,
   tableHeadColumnClassName,
-  tableHeadColumnBorderClassName,
   tableBodyClassName,
   tableBodyRowClassName,
   tableBodyCellClassName,
@@ -30,7 +28,7 @@ import {
   columnResizerFullClassName,
   columnResizerLineClassName,
 } from 'config'
-import { ChudoTableColumnAlignment, ChudoTableColumnSortDirection, ChudoTableColumnType, EntityID, TableStyleContextType } from "types";
+import { ChudoTableColumnAlignment, ChudoTableColumnSortDirection, ChudoTableColumnType, ChudoTableRow, EntityID, TableStyleContextType } from "types";
 import { useTableCaption, useControlledTableLayout } from "hooks";
 
 /**
@@ -124,13 +122,7 @@ export const TableWrapper = (props: TableWrapperProps) => {
 /**
  * Root
  */
-export interface TableRootProps extends HTMLAttributes<HTMLTableElement>, Pick<TableStyleContextType,
-  'fixed' |
-  'stripe' |
-  'rowBorder' |
-  'compact' |
-  'highlightRow'
-> {
+export interface TableRootProps extends HTMLAttributes<HTMLTableElement>, Omit<TableStyleContextType, 'round' | 'border'> {
   children: ReactNode;
   rowCount?: number;
 }
@@ -144,6 +136,7 @@ export const TableRoot = forwardRef<HTMLTableElement, TableRootProps>((props, re
     fixed,
     stripe,
     rowBorder,
+    columnBorder,
     compact,
     highlightRow,
     ...rest
@@ -155,12 +148,14 @@ export const TableRoot = forwardRef<HTMLTableElement, TableRootProps>((props, re
     fixed: tableRootFixed,
     stripe: tableRootStripe,
     rowBorder: tableRootRowBorder,
+    columnBorder: tableColumnBorder,
     compact: tableRootCompact,
     highlightRow: tableRootHighlightRow,
   } = useControlledTableLayout({
     fixed,
     stripe,
     rowBorder,
+    columnBorder,
     compact,
     highlightRow,
   });
@@ -173,6 +168,7 @@ export const TableRoot = forwardRef<HTMLTableElement, TableRootProps>((props, re
         [tableFixedClassName]: tableRootFixed,
         [tableStripeClassName]: tableRootStripe,
         [tableRowBorderClassName]: tableRootRowBorder,
+        [tableColumnBorderClassName]: tableColumnBorder,
         [tableCompactClassName]: tableRootCompact,
         [tableHighlightRowClassName]: tableRootHighlightRow,
       })}
@@ -229,9 +225,7 @@ export const TableHeadRow = (props: TableHeadRowProps) => {
 /**
  * Head Column
  */
-export interface TableColumnProps extends HTMLAttributes<HTMLTableCellElement>, Pick<TableStyleContextType,
-  'border'
-> {
+export interface TableColumnProps extends HTMLAttributes<HTMLTableCellElement> {
   children: ReactNode;
   type: ChudoTableColumnType;
   alignment: ChudoTableColumnAlignment;
@@ -245,19 +239,10 @@ export const TableColumn = (props: TableColumnProps) => {
     type,
     alignment,
     sortable,
-    border,
     ...rest
   } = props;
 
   const getProps = useCallback(() => rest, [rest]);
-
-  const {
-    border: tableColumnBorder,
-    rowBorder: tableCellRowBorder,
-    columnBorder: tableCellColumnBorder,
-  } = useControlledTableLayout({
-    border,
-  });
 
   return (
     <th
@@ -266,11 +251,7 @@ export const TableColumn = (props: TableColumnProps) => {
       data-alignment={alignment}
       data-sortable={sortable}
       aria-sort="ascending"
-      className={clsx(tableCellClassName, tableHeadColumnClassName, {
-        [tableHeadColumnBorderClassName]: tableColumnBorder,
-        [tableCellRowBorderClassName]: tableCellRowBorder,
-        [tableCellColumnBorderClassName]: tableCellColumnBorder
-      })}
+      className={clsx(tableCellClassName, tableHeadColumnClassName)}
       {...getProps()}
     >
       {children}
@@ -288,7 +269,11 @@ export interface TableBodyProps extends HTMLAttributes<HTMLTableSectionElement> 
 }
 
 export const TableBody = (props: TableBodyProps) => {
-  const { className, children, ...rest } = props;
+  const {
+    className,
+    children,
+    ...rest
+  } = props;
 
   const getProps = useCallback(() => rest, [rest])
 
@@ -303,22 +288,24 @@ export const TableBody = (props: TableBodyProps) => {
  * Row
  */
 
-export interface TableRowProps extends HTMLAttributes<HTMLTableRowElement> {
+export interface TableRowProps<Entity> extends HTMLAttributes<HTMLTableRowElement> {
   children: ReactNode;
-  rowId: EntityID;
+  rowId: EntityID,
   rowIndex: number;
+  row?: Entity;
 }
 
-export const TableRow = (props: TableRowProps) => {
+export function TableRow<Entity = any,>(props: TableRowProps<Entity>) {
   const {
     className,
     children,
     rowId,
     rowIndex,
+    row: _row,
     ...rest
   } = props;
 
-  const getProps = useCallback(() => rest, [rest]);
+  const getProps = useCallback(() => rest, [rest])
 
   return (
     <tr
@@ -337,9 +324,7 @@ export const TableRow = (props: TableRowProps) => {
  * Cell
  */
 
-export interface TableCellProps extends HTMLAttributes<HTMLTableCellElement>, Pick<TableStyleContextType,
-  'border'
-> {
+export interface TableCellProps extends HTMLAttributes<HTMLTableCellElement> {
   children: ReactNode;
   rowId: EntityID;
   rowIndex: number;
@@ -354,19 +339,10 @@ export const TableCell = (props: TableCellProps) => {
     rowIndex,
     type,
     alignment,
-    border,
     ...rest
   } = props;
 
   const getProps = useCallback(() => rest, [rest])
-
-  const {
-    rowBorder: tableCellRowBorder,
-    columnBorder: tableCellColumnBorder,
-  } = useControlledTableLayout({
-
-  });
-
 
   return (
     <td
@@ -375,10 +351,7 @@ export const TableCell = (props: TableCellProps) => {
       aria-rowindex={rowIndex}
       data-type={type}
       data-alignment={alignment}
-      className={clsx(tableCellClassName, tableBodyCellClassName, {
-        [tableCellRowBorderClassName]: tableCellRowBorder,
-        [tableCellColumnBorderClassName]: tableCellColumnBorder
-      })}
+      className={clsx(tableCellClassName, tableBodyCellClassName)}
       {...getProps()}
     >
       {children}

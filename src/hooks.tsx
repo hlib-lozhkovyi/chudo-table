@@ -490,15 +490,15 @@ export function useColumnWidth<Entity = any>(accessor: AccessorKey<Entity>): [nu
   const { computedWidth, minWidth = 0, maxWidth = Number.MAX_SAFE_INTEGER } = column;
 
   const setWidth = useCallback((nextWidth: number) => {
-    if (isNumber(minWidth) && nextWidth < minWidth) {
+    if (isNumber(minWidth) && nextWidth <= minWidth) {
       return;
     }
 
-    if (isNumber(maxWidth) && nextWidth > maxWidth) {
+    if (isNumber(maxWidth) && nextWidth >= maxWidth) {
       return;
     }
 
-    updateColumn({ computedWidth: nextWidth });
+    updateColumn({ computedWidth: Math.max(nextWidth, 0) });
   }, [updateColumn, minWidth, maxWidth])
 
   return [computedWidth, setWidth];

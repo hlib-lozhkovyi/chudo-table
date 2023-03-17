@@ -43,7 +43,7 @@ export interface TableProps<T> extends HTMLAttributes<HTMLTableElement>, TableSt
   Column?: ElementType<TableColumnProps>;
   Resizer?: ElementType<TableColumnResizerProps>;
   Body?: ElementType<TableBodyProps>;
-  Row?: ElementType<TableRowProps>;
+  Row?: ElementType<TableRowProps<T>>;
   Cell?: ElementType<TableCellProps>;
 }
 
@@ -71,17 +71,21 @@ export function Table<Entity = any>(props: TableProps<Entity>) {
     ChudoTableColumnProvider as unknown
   ) as Provider<ChudoTableColumn<Entity>>;
 
+
+
+  const gridColumnsWidth = useMemo(() => {
+    return columnWidth
+      .map(([min, max]) => min ? `minmax(${min}, ${max})` : max)
+      .join(' ')
+  }, [columnWidth])
+
   useEffect(() => {
     if (!tableRef.current) {
       return;
     }
 
-    const gridColumnsWidth = columnWidth
-      .map(([min, max]) => `minmax(${min}, ${max})`)
-      .join(' ')
-
     tableRef.current.style.gridTemplateColumns = gridColumnsWidth;
-  }, [columnWidth])
+  }, [gridColumnsWidth]);
 
   return (
     <Wrapper tableId={id} fixed={fixed}>
@@ -103,13 +107,13 @@ export function Table<Entity = any>(props: TableProps<Entity>) {
                     {column.sortable && (
                       <ColumnSorter Arrow={SortArrow} />
                     )}
-
-                    {(column.resizable) && (
-                      <ColumnResizer>
-                        <Resizer />
-                      </ColumnResizer>
-                    )}
                   </column.HeaderWrapper>
+
+                  {(column.resizable) && (
+                    <ColumnResizer>
+                      <Resizer />
+                    </ColumnResizer>
+                  )}
                 </Column>
               </ColumnProvider>
             ))}
@@ -117,12 +121,17 @@ export function Table<Entity = any>(props: TableProps<Entity>) {
         </Head>
         <Body>
           {rows.map((row) => (
-            <Row key={row.id} rowId={row.id} rowIndex={row.index}>
+            <Row key={row.id} rowId={row.id} rowIndex={row.index} row={row._raw}>
               {columns.map((column) => {
                 const value = getCellValue(row, column.accessor);
 
                 return (
-                  <Cell type={column.type} rowId={row.id} rowIndex={row.index} alignment={column.alignment}>
+                  <Cell
+                    type={column.type}
+                    rowId={row.id}
+                    rowIndex={row.index}
+                    alignment={column.alignment}
+                  >
                     <column.Wrapper>
                       <column.Cell
                         value={value}
