@@ -1,6 +1,6 @@
 {
   "name": "chudo-table-project-docs",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": true,
   "scripts": {
     "docusaurus": "docusaurus",
@@ -19,7 +19,7 @@
     "@mdx-js/react": "^1.6.22",
     "clsx": "^1.2.1",
     "prism-react-renderer": "^1.3.5",
-    "@chudotable/lib": "*"
+    "chudo-table": "latest"
   },
   "devDependencies": {
     "@docusaurus/module-type-aliases": "2.3.1"
