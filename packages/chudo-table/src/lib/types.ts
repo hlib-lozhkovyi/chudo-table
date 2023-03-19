@@ -1,4 +1,4 @@
-import { FunctionComponent, ElementType, ReactNode } from 'react';
+import { FunctionComponent, ReactNode } from 'react';
 
 export type AccessorKey<Entity = any> = Extract<keyof Entity, string>;
 
@@ -28,9 +28,9 @@ export interface ChudoTableColumnConfig<Entity, Key = AccessorKey<Entity>> exten
 export interface ChudoTableColumn<Entity, Key extends AccessorKey<Entity> = AccessorKey<Entity>>
   extends ChudoTableColumnConfig<Entity> {
   Header: FunctionComponent<{}>;
-  HeaderWrapper: ElementType<{ accessor?: Key; children: ReactNode }>;
-  Wrapper: ElementType;
-  Cell: FunctionComponent<{ value: Entity[Key] } & Entity>;
+  HeaderWrapper: FunctionComponent<{ accessor?: Key; children: ReactNode }>;
+  Wrapper: FunctionComponent<{ children: ReactNode }>;
+  Cell: FunctionComponent<{ value: unknown } & Entity>;
 }
 
 export type ChudoTableRow<Entity> = {

@@ -1,13 +1,13 @@
-import React, { ReactElement, ReactNode, Children } from 'react';
-import isFunction from 'lodash/isFunction';
-import get from 'lodash/get';
-import isNumber from 'lodash/isNumber';
+import { ReactElement, ReactNode, Children, isValidElement } from 'react';
+import isFunction from 'lodash.isfunction';
+import get from 'lodash.get';
+import isNumber from 'lodash.isnumber';
 import {
   Column, SelectColumn, ActionColumn, CheckboxInput, IndeterminateCheckboxInput, ColumnProps, TableColumnActionWrapper,
   TableColumnSimpleWrapper
-} from 'components';
-import { AccessorKey, ChudoTableColumn, ChudoTableColumnAlignment, ChudoTableColumnSortDirection, ChudoTableColumnType, ChudoTableRow } from 'types';
-import { CellWrapper, ColumnHeader, } from 'elements';
+} from './components';
+import { AccessorKey, ChudoTableColumn, ChudoTableColumnAlignment, ChudoTableColumnSortDirection, ChudoTableColumnType, ChudoTableRow } from './types';
+import { CellWrapper, ColumnHeader, } from './elements';
 
 /**
  *
@@ -79,11 +79,11 @@ export function isEmptyReactChildren(node: ReactNode) {
 /**
  *
  */
-export function createColumnsFromChildren<Record = any>(children: React.ReactNode): ChudoTableColumn<Record>[] {
+export function createColumnsFromChildren<Record = any>(children: ReactNode): ChudoTableColumn<Record>[] {
   let columns: ChudoTableColumn<Record>[] = [];
 
-  React.Children.forEach(children, (element, index) => {
-    if (!React.isValidElement(element)) {
+  Children.forEach(children, (element, index) => {
+    if (!isValidElement(element)) {
       return;
     }
 
@@ -146,7 +146,7 @@ export function createColumnsFromChildren<Record = any>(children: React.ReactNod
       Cell: isFunction(children)
         ? (props) => children(props)
         : !isEmptyReactChildren(children)
-          ? React.Children.only(children)
+          ? Children.only(children)
           : ({ value }) => value
     };
 

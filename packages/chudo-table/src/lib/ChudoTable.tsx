@@ -1,15 +1,15 @@
 import './styles.scss';
 
-import React, { ElementType, Provider, ReactNode, useMemo } from 'react';
-import { TableContainerProps, TableContainer } from 'elements';
+import { FunctionComponent, Provider, ReactNode, useMemo } from 'react';
+import { TableContainerProps, TableContainer } from './elements';
 
-import { UseChudoTableHook, useChudoTable } from 'hooks';
-import { ChudoTableProvider, TableStyleProvider } from 'context';
-import { ChudoTableContextType, TableStyleContextType } from 'types';
+import { UseChudoTableHook, useChudoTable } from './hooks';
+import { ChudoTableProvider, TableStyleProvider } from './context';
+import { ChudoTableContextType, TableStyleContextType } from './types';
 
 export interface ChudoTableProps<Record> extends UseChudoTableHook<Record>, TableContainerProps, TableStyleContextType {
   children: ReactNode;
-  Container?: ElementType<TableContainerProps>;
+  Container?: FunctionComponent<TableContainerProps>;
 }
 
 export function ChudoTable<Record = any, RemoteData = any>(props: ChudoTableProps<Record>) {

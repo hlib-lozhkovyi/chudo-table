@@ -1,9 +1,9 @@
-import React, { ElementType, PropsWithRef, HTMLAttributes, ReactNode, useEffect, useCallback, useMemo, MouseEvent, ComponentType, Provider, useRef } from 'react';
+import { PropsWithRef, HTMLAttributes, ReactNode, useEffect, useCallback, useMemo, MouseEvent, FunctionComponent, Provider, useRef } from 'react';
 import clsx from 'classnames';
-import isFunction from 'lodash/isFunction';
-import get from 'lodash/get';
+import isFunction from 'lodash.isfunction';
+import get from 'lodash.get';
 
-import { useChudoTableColumnContext, useColumnResize, useColumnSort, useColumns, useFetchData, usePagination, useResponse, useRowSelection, useSetRows, useSorting, useTable, useTableComputedStyles, useTableMeta, useControlledTableLayout } from 'hooks';
+import { useChudoTableColumnContext, useColumnResize, useColumnSort, useColumns, useFetchData, usePagination, useResponse, useRowSelection, useSetRows, useSorting, useTable, useTableComputedStyles, useTableMeta, useControlledTableLayout } from './hooks';
 import {
   TableWrapperProps,
   TableWrapper,
@@ -26,25 +26,26 @@ import {
   TableColumnResizerProps,
   SortArrow,
   SortArrowProps,
-} from 'elements'
-import { createColumnsFromChildren, getCellValue } from 'utils';
-import { AccessorKey, ChudoTableColumn, ChudoTablePaginationState, DataFetcherParserResult, DataFetcherProps, TableStyleContextType } from 'types';
-import { columnSorterClassName, headerCaptionClassName, headerClassName, paginationBorderClassName, paginationCaptionClassName, paginationCaptionNumberClassName, paginationClassName, paginationMetaClassName, paginationNavigationClassName, paginationNavigationItemClassName, paginationNavigationPageActiveClassName, paginationNavigationPageClassName, selectionPanelClassName, tableHeadColumnActionWrapperClassName, tableHeadColumnResizerClassName, tableHeadColumnSimpleWrapperClassName, tableHeadColumnWrapperClassName } from 'config';
-import { ChudoTableColumnProvider } from 'context';
+} from './elements'
+import { createColumnsFromChildren, getCellValue } from './utils';
+import { AccessorKey, ChudoTableColumn, ChudoTablePaginationState, DataFetcherParserResult, DataFetcherProps, TableStyleContextType } from './types';
+import { columnSorterClassName, headerCaptionClassName, headerClassName, paginationBorderClassName, paginationCaptionClassName, paginationCaptionNumberClassName, paginationClassName, paginationMetaClassName, paginationNavigationClassName, paginationNavigationItemClassName, paginationNavigationPageActiveClassName, paginationNavigationPageClassName, selectionPanelClassName, tableHeadColumnActionWrapperClassName, tableHeadColumnResizerClassName, tableHeadColumnSimpleWrapperClassName, tableHeadColumnWrapperClassName } from './config';
+import { ChudoTableColumnProvider } from './context';
 
 /**
  * Table
  */
 export interface TableProps<T> extends HTMLAttributes<HTMLTableElement>, TableStyleContextType {
-  Wrapper?: ElementType<TableWrapperProps>;
-  Root?: ElementType<PropsWithRef<TableRootProps>>;
-  Head?: ElementType<TableHeadProps>;
-  HeadRow?: ElementType<TableHeadRowProps>;
-  Column?: ElementType<TableColumnProps>;
-  Resizer?: ElementType<TableColumnResizerProps>;
-  Body?: ElementType<TableBodyProps>;
-  Row?: ElementType<TableRowProps<T>>;
-  Cell?: ElementType<TableCellProps>;
+  children?: ReactNode;
+  Wrapper?: FunctionComponent<TableWrapperProps>;
+  Root?: FunctionComponent<PropsWithRef<TableRootProps>>;
+  Head?: FunctionComponent<TableHeadProps>;
+  HeadRow?: FunctionComponent<TableHeadRowProps>;
+  Column?: FunctionComponent<TableColumnProps>;
+  Resizer?: FunctionComponent<TableColumnResizerProps>;
+  Body?: FunctionComponent<TableBodyProps>;
+  Row?: FunctionComponent<TableRowProps<T>>;
+  Cell?: FunctionComponent<TableCellProps>;
 }
 
 export function Table<Entity = any>(props: TableProps<Entity>) {
@@ -70,8 +71,6 @@ export function Table<Entity = any>(props: TableProps<Entity>) {
   const ColumnProvider = (
     ChudoTableColumnProvider as unknown
   ) as Provider<ChudoTableColumn<Entity>>;
-
-
 
   const gridColumnsWidth = useMemo(() => {
     return columnWidth
@@ -209,7 +208,7 @@ export interface ColumnMetaDefinition {
 export interface ColumnProps<Entity = any, K extends Extract<keyof Entity, string> = Extract<keyof Entity, string>> extends ColumnMetaDefinition {
   accessor: K;
   Header?: ReactNode;
-  Wrapper?: ElementType;
+  Wrapper?: FunctionComponent;
   children?: (value: Entity) => ReactNode | ReactNode;
 }
 
@@ -380,7 +379,7 @@ export function DataSource<Entity = any, RemoteData = Entity[]>(props: DataSourc
 
       const remoteData = isFunction(parse)
         ? parse(result)
-        : { data: result } as DataFetcherParserResult<Entity>;
+        : { data: result } as unknown as DataFetcherParserResult<Entity>;
 
       setRemoteData(remoteData)
     } catch (error) {
@@ -452,7 +451,9 @@ export function ColumnResizer<Entity = any>(props: ColumnResizerProps<Entity>) {
 
   const { isResizing, startResize, stopResize } = useColumnResize<Entity>(accessor);
 
-  const handleMouseClick = (e) => e.preventDefault();
+  const handleMouseClick = (event: MouseEvent<HTMLElement>): void => {
+    // TODO:
+  };
 
   const handleMouseDown = useCallback((event: MouseEvent<HTMLDivElement>) => {
     const target = event.target as HTMLDivElement;
@@ -482,7 +483,7 @@ export function ColumnResizer<Entity = any>(props: ColumnResizerProps<Entity>) {
 
 export interface ColumnSorterProps<Entity> {
   accessor?: AccessorKey<Entity>;
-  Arrow: ComponentType<SortArrowProps>;
+  Arrow: FunctionComponent<SortArrowProps>;
 }
 
 export function ColumnSorter<Entity = any>(props: ColumnSorterProps<Entity>) {

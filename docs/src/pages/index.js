@@ -1,9 +1,9 @@
 import React from 'react';
 import clsx from 'clsx';
-import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
 import HomepageFeatures from '@site/src/components/HomepageFeatures';
+import DemoTable from '@site/src/components/Demo';
 
 import styles from './index.module.css';
 
@@ -14,23 +14,8 @@ function HomepageHeader() {
       <div className="container">
         <h1 className="hero__title">{siteConfig.title}</h1>
         <p className="hero__subtitle">{siteConfig.tagline}</p>
-        <div className={styles.buttons}>
-          <table>
-            <thead>
-              <th>1</th>
-              <th>2</th>
-            </thead>
-            <tbody>
-              <tr>
-                <td>1.1.</td>
-                <td>1.2</td>
-              </tr>
-              <tr>
-                <td>2.1.</td>
-                <td>2.2</td>
-              </tr>
-            </tbody>
-          </table>
+        <div className={styles.demoWrapper}>
+          <DemoTable />
         </div>
         <p className="hero__uvp">{siteConfig.uvp}</p>
       </div>
@@ -41,7 +26,7 @@ function HomepageHeader() {
 export default function Home() {
   const { siteConfig } = useDocusaurusContext();
   return (
-    <Layout title={`Hello from ${siteConfig.title}`} description="Description will go into a meta tag in <head />">
+    <Layout description={siteConfig.description}>
       <HomepageHeader />
       <main>
         <HomepageFeatures />

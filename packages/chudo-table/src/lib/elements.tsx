@@ -1,6 +1,6 @@
-import React, { HTMLAttributes, InputHTMLAttributes, ReactNode, forwardRef, useCallback, useMemo } from "react";
+import { HTMLAttributes, InputHTMLAttributes, ReactNode, forwardRef, useCallback, useMemo } from "react";
 import clsx from 'classnames';
-import isNil from 'lodash/isNil';
+import isNil from 'lodash.isnil';
 import {
   containerClassName,
   containerBorderClassName,
@@ -27,9 +27,9 @@ import {
   columnResizerClassName,
   columnResizerFullClassName,
   columnResizerLineClassName,
-} from 'config'
-import { ChudoTableColumnAlignment, ChudoTableColumnSortDirection, ChudoTableColumnType, ChudoTableRow, EntityID, TableStyleContextType } from "types";
-import { useTableCaption, useControlledTableLayout } from "hooks";
+} from './config'
+import { ChudoTableColumnAlignment, ChudoTableColumnSortDirection, ChudoTableColumnType, EntityID, TableStyleContextType } from "./types";
+import { useTableCaption, useControlledTableLayout } from "./hooks";
 
 /**
  * Wrapper
@@ -227,9 +227,9 @@ export const TableHeadRow = (props: TableHeadRowProps) => {
  */
 export interface TableColumnProps extends HTMLAttributes<HTMLTableCellElement> {
   children: ReactNode;
-  type: ChudoTableColumnType;
-  alignment: ChudoTableColumnAlignment;
-  sortable: boolean | undefined;
+  type?: ChudoTableColumnType;
+  alignment?: ChudoTableColumnAlignment;
+  sortable?: boolean | undefined;
 }
 
 export const TableColumn = (props: TableColumnProps) => {
@@ -290,8 +290,8 @@ export const TableBody = (props: TableBodyProps) => {
 
 export interface TableRowProps<Entity> extends HTMLAttributes<HTMLTableRowElement> {
   children: ReactNode;
-  rowId: EntityID,
-  rowIndex: number;
+  rowId?: EntityID,
+  rowIndex?: number;
   row?: Entity;
 }
 
@@ -326,10 +326,10 @@ export function TableRow<Entity = any,>(props: TableRowProps<Entity>) {
 
 export interface TableCellProps extends HTMLAttributes<HTMLTableCellElement> {
   children: ReactNode;
-  rowId: EntityID;
-  rowIndex: number;
-  type: ChudoTableColumnType;
-  alignment: ChudoTableColumnAlignment;
+  rowId?: EntityID;
+  rowIndex?: number;
+  type?: ChudoTableColumnType;
+  alignment?: ChudoTableColumnAlignment;
 }
 
 export const TableCell = (props: TableCellProps) => {

@@ -1,0 +1,10 @@
+/**
+ * CSS files with the .module.css suffix will be treated as CSS modules
+ * and scoped locally.
+ */
+
+.demo {
+  width: auto;
+  margin: auto;
+  max-width: 820px;
+}

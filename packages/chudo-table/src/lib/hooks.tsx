@@ -1,10 +1,10 @@
-import { useReducer, useMemo, Reducer, useCallback, useContext, Context, useState, ChangeEvent, useRef, useEffect } from 'react';
-import isFunction from 'lodash/isFunction';
-import get from 'lodash/get';
-import isNumber from 'lodash/isNumber';
-import merge from 'lodash/merge';
-import { ChudoTableColumnContext, ChudoTableContext, TableStyleContext } from 'context';
-import { chudoTableReducer } from 'reducer';
+import { useReducer, useMemo, Reducer, useCallback, useContext, Context, MouseEvent, ChangeEvent, useRef, useEffect } from 'react';
+import isFunction from 'lodash.isfunction';
+import get from 'lodash.get';
+import isNumber from 'lodash.isnumber';
+import merge from 'lodash.merge';
+import { ChudoTableColumnContext, ChudoTableContext, TableStyleContext } from './context';
+import { chudoTableReducer } from './reducer';
 import {
   ChudoTableContextType,
   ChudoTableState,
@@ -23,8 +23,8 @@ import {
   ChudoTableColumnMetaConfig,
   ChudoTableColumnSortDirection,
   ChudotTableSortState
-} from "types";
-import { generateRowId, getRowIndex, isAllRowsSelected, widthToStyleValue } from 'utils';
+} from "./types";
+import { generateRowId, getRowIndex, isAllRowsSelected, widthToStyleValue } from './utils';
 
 /**
  * 
@@ -51,6 +51,8 @@ export function useChudoTable<Entity = any, RemoteData = Entity[]>(
     idAccessor,
     id: tableId
   } = props
+
+  console.log('useChudoTable')
 
   const [state, dispatch] = useReducer<
     Reducer<ChudoTableState<Entity, RemoteData>, ChudoTableAction<Entity, RemoteData>>
@@ -521,7 +523,7 @@ export interface UseColumnResizeHook {
 export function useColumnResize<Entity = any>(accessor: AccessorKey<Entity>): UseColumnResizeHook {
   const [, setWidth] = useColumnWidth(accessor);
 
-  const offset = useRef<Number | null>(null);
+  const offset = useRef<number | null>(null);
 
   const isResizing = useMemo(() => !!offset.current, [offset.current])
 
@@ -538,12 +540,12 @@ export function useColumnResize<Entity = any>(accessor: AccessorKey<Entity>): Us
   }, []);
 
 
-  const mouseMoveHandler = useCallback((e) => {
+  const mouseMoveHandler = useCallback((event: MouseEvent) => {
     if (!offset.current) {
       return;
     }
 
-    const nextWidth = offset.current + e.pageX;
+    const nextWidth = offset.current + event.pageX;
 
     setWidth(nextWidth)
   }, [])
@@ -555,12 +557,16 @@ export function useColumnResize<Entity = any>(accessor: AccessorKey<Entity>): Us
   const startResize = useCallback((startOffset: number) => {
     offset.current = startOffset;
 
+    // @ts-ignore
+    // TODO: fix the typo
     document.addEventListener('mousemove', mouseMoveHandler);
     document.addEventListener('mouseup', mouseUpHandler);
   }, []);
 
   useEffect(function cleanUpListeners() {
     return () => {
+      // @ts-ignore
+      // TODO: fix the typo
       document.removeEventListener('mousemove', mouseMoveHandler);
       document.removeEventListener('mouseup', mouseUpHandler);
     }

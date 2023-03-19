@@ -1,6 +1,6 @@
-import { ChudoTableAction, ChudoTableState } from 'types';
-import { getNextColumnSortValue } from 'utils';
-import xor from 'lodash/xor';
+import xor from 'lodash.xor';
+import { ChudoTableAction, ChudoTableState } from './types';
+import { getNextColumnSortValue } from './utils';
 
 export const chudoTableReducer = <Record, RemoteData>(
   state: ChudoTableState<Record, RemoteData>,

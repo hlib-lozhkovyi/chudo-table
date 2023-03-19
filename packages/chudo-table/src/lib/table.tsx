@@ -7,4 +7,4 @@ export {
   TableBody as Body,
   TableRow as Row,
   TableCell as Cell,
-} from 'elements'
+} from './elements'
