@@ -7,8 +7,8 @@
     "build": "NODE_ENV=production tsc && vite build",
     "preview": "vite preview",
     "prepack": "json -f package.json -I -e \"delete this.devDependencies; delete this.dependencies\"",
-    "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "storybook": "start-storybook -p 6006",
+    "build-storybook": "build-storybook"
   },
   "license": "MIT",
   "dependencies": {
@@ -21,6 +21,14 @@
     "lodash.xor": "^4.5.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.21.3",
+    "@storybook/addon-actions": "^6.5.16",
+    "@storybook/addon-essentials": "^6.5.16",
+    "@storybook/addon-interactions": "^6.5.16",
+    "@storybook/addon-links": "^6.5.16",
+    "@storybook/builder-vite": "^0.4.2",
+    "@storybook/react": "^6.5.16",
+    "@storybook/testing-library": "^0.0.13",
     "@types/lodash.get": "^4.4.7",
     "@types/lodash.isfunction": "^3.0.7",
     "@types/lodash.isnil": "^4.0.7",
@@ -28,6 +36,7 @@
     "@types/lodash.merge": "^4.6.7",
     "@types/lodash.xor": "^4.5.7",
     "@vitejs/plugin-react": "^3.1.0",
+    "babel-loader": "^8.3.0",
     "sass": "^1.59.3",
     "vite": "^4.2.0",
     "vite-plugin-dts": "^2.1.0"

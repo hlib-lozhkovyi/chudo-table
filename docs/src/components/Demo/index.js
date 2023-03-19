@@ -24,10 +24,6 @@ export default function DemoTableNew() {
 
 
   return (
-    JSON.stringify(ReactFromModule === React)
-  )
-
-  return (
     <section id="demo" className={styles.demo}>
       <ChudoTable
         id="users"
